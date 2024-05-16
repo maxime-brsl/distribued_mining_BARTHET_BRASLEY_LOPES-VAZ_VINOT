@@ -1,56 +1,64 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.Socket;
 import java.net.URL;
+import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class LauncherSkeleton {
 
     private static final String BASE_URL = "https://projet-raizo-idmc.netlify.app/.netlify/functions";
     private static final String AUTH_TOKEN = "reclRPzXSOmGArkLi";
+    private static final int SERVER_PORT = 1337;
+    private static final String SERVER_HOST = "localhost";
+    private static final Logger LOG = Logger.getLogger(LauncherSkeleton.class.getName());
+    private final Scanner scanner = new Scanner(System.in);
 
     public void run() throws Exception {
 
         // écoute les commandes
         boolean keepGoing = true;
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        while(keepGoing) {
-            final String commande = reader.readLine();
-            if(commande == null) break;
+        while (keepGoing) {
+            System.out.print("> ");
+            final String commande = scanner.nextLine();
 
-            keepGoing = processCommand(commande.trim());
+            if (("quit").equals(commande)) {
+                keepGoing = false;
+            } else {
+                processCommand(commande.trim());
+            }
         }
     }
 
-    private boolean processCommand(String cmd) throws Exception {
-        if(("quit").equals(cmd)) {
-            // TODO shutdown
-            return false;
-        }
-
-        if(("cancel").equals(cmd)) {
-            cancelTask();
-        } else if(("status").equals(cmd)) {
-            getWorkersStatus();
-        } else if(("help").equals(cmd.trim())) {
-            // Afficher l'aide
-            System.out.println(" • status - display informations about connected workers");
-            System.out.println(" • solve <d> - try to mine with given difficulty");
-            System.out.println(" • cancel - cancel a task");
-            System.out.println(" • help - describe available commands");
-            System.out.println(" • quit - terminate pending work and quit");
-        } else if(cmd.startsWith("solve")) {
-            // Récupérer la difficulté spécifiée par l'utilisateur
-            String[] parts = cmd.split(" ");
-            if (parts.length < 2) {
-                System.out.println("Usage: solve <difficulty>");
-                return true;
+    private void processCommand(String cmd) {
+        try {
+            if (("cancel").equals(cmd)) {
+                cancelTask();
+            } else if (("status").equals(cmd)) {
+                getWorkersStatus();
+            } else if (("help").equals(cmd.trim())) {
+                // Afficher l'aide
+                System.out.println(" • status - afficher des informations sur les travailleurs connectés");
+                System.out.println(" • solve <d> - essayer de miner avec la difficulté spécifiée");
+                System.out.println(" • cancel - annuler une tache");
+                System.out.println(" • help - décrire les commandes disponibles");
+                System.out.println(" • quit - mettre fin au programme et quitter");
+            } else if (cmd.startsWith("solve")) {
+                // Récupérer la difficulté spécifiée par l'utilisateur
+                String[] parts = cmd.split(" ");
+                if (parts.length < 2) {
+                    LOG.info("Erreur: difficulté manquante");
+                } else {
+                    int difficulty = Integer.parseInt(parts[1]);
+                    solveTask(difficulty);
+                }
             }
-            int difficulty = Integer.parseInt(parts[1]);
-            solveTask(difficulty);
+        } catch (Exception e) {
+            LOG.warning("Erreur: " + e.getMessage());
         }
-
-        return true;
     }
 
     private void cancelTask() {
@@ -63,13 +71,13 @@ public class LauncherSkeleton {
             int responseCode = con.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 // Tâche annulée avec succès
-                System.out.println("Task cancelled successfully.");
+                System.out.println("Tache annulée avec succès.");
             } else {
                 // Gérer les erreurs
-                System.out.println("Failed to cancel task. Response code: " + responseCode);
+                LOG.warning("Error pour annuler la tâche. Code de réponse: " + responseCode);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.warning("Erreur: " + e.getMessage());
         }
     }
 
@@ -78,7 +86,25 @@ public class LauncherSkeleton {
     }
 
     private void solveTask(int difficulty) {
-        // Implémenter la logique pour résoudre une tâche avec la difficulté spécifiée
+        try {
+            Socket socket = new Socket(SERVER_HOST, SERVER_PORT);
+
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            out.println("solve " + difficulty);
+
+            String response;
+            while ((response = in.readLine()) != null) {
+                System.out.println("Reponse du serveur: " + response);
+                System.out.print("> ");
+                String commande = scanner.nextLine();
+                processCommand(commande.trim());
+            }
+            socket.close();
+        } catch (IOException e) {
+            LOG.warning("Erreur: " + e.getMessage());
+        }
     }
 
     public static void main(String[] args) throws Exception {
