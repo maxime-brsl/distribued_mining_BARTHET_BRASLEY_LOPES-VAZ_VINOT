@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static java.lang.System.out;
-
 public class Server implements Runnable{
     private static final String BASE_URL = "https://projet-raizo-idmc.netlify.app/.netlify/functions";
     private static final String AUTH_TOKEN = "reclRPzXSOmGArkLi";
@@ -23,11 +21,11 @@ public class Server implements Runnable{
     }
 
     public void start() {
-        out.println("Serveur démarré");
+        System.out.println("Serveur démarré");
         while (true) {
             try {
                 Socket workerSocket = serverSocket.accept();
-                out.println("Nouveau worker connecté: " + workerSocket);
+                System.out.println("Nouveau worker connecté: " + workerSocket);
                 Worker worker = new Worker(workerSocket);
                 workers.add(worker);
                 new Thread(worker).start();
@@ -52,7 +50,7 @@ public class Server implements Runnable{
             int responseCode = con.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 //TODO : Annuler la tâche sur le worker
-                out.println("Tache annulée avec succès.");
+                System.out.println("Tache annulée avec succès.");
             } else {
                 // Gérer les erreurs
                 LOG.warning("Error pour annuler la tâche. Code de réponse: " + responseCode);
@@ -67,7 +65,7 @@ public class Server implements Runnable{
     }
 
     public void solveTask(final int difficulty) {
-
+        //TODO : Résoudre la tâche
     }
 
     @Override
