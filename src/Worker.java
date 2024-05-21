@@ -84,10 +84,6 @@ public class Worker implements Runnable {
         return result;
     }
 
-    private byte[] intToBytes(int value) {
-        return ByteBuffer.allocate(4).putInt(value).array();
-    }
-
     private String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder(2 * bytes.length);
         for (byte b : bytes) {
