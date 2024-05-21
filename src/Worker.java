@@ -12,6 +12,7 @@ public class Worker implements Runnable {
     private PrintWriter out;
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private String password = "mdp";
+    private String state = "WAITING";
 
     public Worker(Socket socket) {
         this.socket = socket;
@@ -28,7 +29,7 @@ public class Worker implements Runnable {
         try {
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("Message reçu du serveur: " + message);
+                System.out.println("Message received : " + message);
                 communication(message);
             }
         } catch (IOException e) {
@@ -37,16 +38,21 @@ public class Worker implements Runnable {
     }
 
     public void communication(final String message) {
-        if (message.equals("WHO_ARE_YOU_?")) {
-            sendMessageToServer("ITS_ME");
-        } else if (message.equals("GIMME_PASSWORD")) {
-            sendMessageToServer(this.password);
+        switch (message) {
+            case "WHO_ARE_YOU_?" -> sendMessageToServer("ITS_ME");
+            case "GIMME_PASSWORD" -> sendMessageToServer("PASSWD " + this.password);
+            case "HELLO_YOU" -> {
+                this.state = "READY";
+                sendMessageToServer("READY");
+            }
+            case "YOU_DONT_FOOL_ME" -> closeConnection();
+            default -> System.out.println("Commande inconnue : " + message);
         }
     }
 
     public void sendMessageToServer(String message) {
-        System.out.println("Envoi du message au serveur: " + message);
         out.println(message);
+        System.out.println("Message sent : " + message);
     }
 
     public String receiveMessageFromWorker() throws IOException {

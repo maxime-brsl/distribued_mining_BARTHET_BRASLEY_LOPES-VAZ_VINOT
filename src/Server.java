@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,8 +9,8 @@ public class Server implements Runnable {
     private ServerSocket serverSocket;
     private List<Worker> workers;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
-    private static final String PASSWORD = "mdp";  // Mot de passe attendu
-    private static final String IDENTIFICATION = "ITS_ME";  // Réponse attendue
+    private static final String PASSWORD = "mdp";
+    private static final String IDENTIFICATION = "ITS_ME";
 
     public Server(int port) {
         try {
@@ -31,15 +28,18 @@ public class Server implements Runnable {
                 Worker worker = acceptNewWorker();
                 initProtocole(worker);
                 String receivedIdentification = worker.receiveMessageFromWorker();
-                System.out.println("Réponse du worker à WHO_ARE_YOU_?: " + receivedIdentification);
                 if (verifyIdentification(receivedIdentification)) {
                     sendMessageToWorker(worker, "GIMME_PASSWORD");
                     String receivedPassword = worker.receiveMessageFromWorker();
-                    System.out.println("Mot de passe reçu du worker: " + receivedPassword);
                     if (verifyPassword(receivedPassword)) {
-                        System.out.println("Worker authentifié avec succès.");
+                        sendMessageToWorker(worker, "HELLO_YOU");
+                        workers.add(worker);
+                        String receivedReady = worker.receiveMessageFromWorker();
+                        if (verifyReady(receivedReady)) {
+                            sendMessageToWorker(worker, "OK");
+                        }
                     } else {
-                        System.out.println("Authentification échouée pour le worker.");
+                        sendMessageToWorker(worker, "YOU_DONT_FOOL_ME");
                         worker.closeConnection();
                     }
                 } else {
@@ -55,9 +55,7 @@ public class Server implements Runnable {
     private Worker acceptNewWorker() throws IOException {
         Socket workerSocket = serverSocket.accept();
         System.out.println("Nouveau worker connecté: " + workerSocket);
-        Worker worker = new Worker(workerSocket);
-        this.workers.add(worker);
-        return worker;
+        return new Worker(workerSocket);
     }
 
     public void initProtocole(final Worker worker) {
@@ -69,11 +67,18 @@ public class Server implements Runnable {
     }
 
     public boolean verifyPassword(String password) {
-        return PASSWORD.equals(password);
+        System.out.println("Message received : " + password);
+        return password.equals("PASSWD " + PASSWORD);
     }
 
     public boolean verifyIdentification(String identification) {
+        System.out.println("Message received : " + identification);
         return IDENTIFICATION.equals(identification);
+    }
+
+    public boolean verifyReady(String ready) {
+        System.out.println("Message received : " + ready);
+        return "READY".equals(ready);
     }
 
     @Override
