@@ -114,8 +114,8 @@ public class Server implements Runnable {
         String workData = data.substring(startIndex, endIndex);
         byte[] workBytes = workData.getBytes();
         System.out.println("Travail généré ! ");
-        for (Worker worker : workers) {
-            Solution solution = worker.mine(workData, Integer.parseInt(difficulty));
+        for (Worker worker: workers) {
+            Solution solution = worker.mine(workBytes, Integer.parseInt(difficulty));
             String json = "{\"d\": " + solution.getDifficulty() + ", \"n\": \"" + solution.getNonce() + "\", \"h\": \"" + solution.getHash() + "\"}";
             System.out.println(apiConnect.validateWork(json));
         }
