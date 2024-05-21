@@ -53,10 +53,10 @@ public class Server implements Runnable {
 
     // Vérification si le worker utilise le bon protocole et a le bon mot de passe
     private boolean authenticateWorker(Worker worker) throws IOException {
-        String receivedIdentification = worker.receiveMessageFromWorker();
+        String receivedIdentification = worker.displayReceivedMessageFromWorker();
         if (verifyIdentification(receivedIdentification)) {
             sendMessageToWorker(worker, Messages.GIMME_PASSWORD);
-            String receivedPassword = worker.receiveMessageFromWorker();
+            String receivedPassword = worker.displayReceivedMessageFromWorker();
             if (verifyPassword(receivedPassword)) {
                 return true;
             } else {
@@ -71,7 +71,7 @@ public class Server implements Runnable {
     private void processWorker(Worker worker) throws IOException {
         sendMessageToWorker(worker, Messages.HELLO_YOU);
         workers.add(worker);
-        String receivedReady = worker.receiveMessageFromWorker();
+        String receivedReady = worker.displayReceivedMessageFromWorker();
         if (verifyReady(receivedReady)) {
             sendMessageToWorker(worker, Messages.OK);
             // TODO: gestion de ce qu'on fait avec le worker
@@ -85,17 +85,14 @@ public class Server implements Runnable {
     }
 
     private boolean verifyPassword(String password) {
-        System.out.println("Message received : " + password);
         return password.equals("PASSWD " + PASSWORD);
     }
 
     private boolean verifyIdentification(String identification) {
-        System.out.println("Message received : " + identification);
         return Messages.IDENTIFICATION.equals(identification);
     }
 
     private boolean verifyReady(String ready) {
-        System.out.println("Message received : " + ready);
         return Messages.READY.equals(ready);
     }
 

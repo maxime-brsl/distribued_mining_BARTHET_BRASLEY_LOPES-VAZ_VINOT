@@ -57,8 +57,10 @@ public class Worker implements Runnable {
         System.out.println("Message sent : " + message);
     }
 
-    public String receiveMessageFromWorker() throws IOException {
-        return in.readLine();
+    public String displayReceivedMessageFromWorker() throws IOException {
+        String message = in.readLine();
+        System.out.println("Message received : " + message);
+        return message;
     }
 
     public void closeConnection() {
