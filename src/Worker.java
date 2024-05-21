@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -135,13 +136,12 @@ public class Worker implements Runnable {
         String prefix = "0".repeat(difficulty);
 
         int nonce = 0;
-        String hash;
-        do {
-            hash = hashSHA256(concatenateBytes(data, intToBytes(nonce)));
+        String hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
+        while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
             nonce++;
-        } while (!Objects.requireNonNull(hash).startsWith(prefix));
-        // Adjust the nonce back to the correct value
-        nonce--;
+            hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
+            System.out.println(hash + " " + nonce);
+        }
         return new Solution(hash, Integer.toHexString(nonce), difficulty);
     }
 
