@@ -8,13 +8,12 @@ import java.util.logging.Logger;
 public class Worker implements Runnable {
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private static final int SERVER_PORT = 1337;
-
     private final Socket socket;
     private final BufferedReader in;
     private final PrintWriter out;
     private final String password = "mdp";
-
     private State state = State.WAITING;
+    private MiningData miningData = new MiningData();
 
     public Worker(Socket socket) throws IOException {
         this.socket = socket;
@@ -83,6 +82,7 @@ public class Worker implements Runnable {
         }
     }
 
+    // chatGPT --> à remodifier
     private enum State {
         WAITING, READY, DISCONNECTED
     }

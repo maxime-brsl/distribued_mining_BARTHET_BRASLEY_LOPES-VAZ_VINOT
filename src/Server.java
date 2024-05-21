@@ -51,6 +51,7 @@ public class Server implements Runnable {
         sendMessageToWorker(worker, Messages.WHO_ARE_YOU);
     }
 
+    // Vérification si le worker utilise le bon protocole et a le bon mot de passe
     private boolean authenticateWorker(Worker worker) throws IOException {
         String receivedIdentification = worker.receiveMessageFromWorker();
         if (verifyIdentification(receivedIdentification)) {
@@ -59,7 +60,7 @@ public class Server implements Runnable {
             if (verifyPassword(receivedPassword)) {
                 return true;
             } else {
-                sendMessageToWorker(worker, Messages.YOU_DONT_FOOL_ME);  // Utilisation de la constante YOU_DONT_FOOL_ME
+                sendMessageToWorker(worker, Messages.YOU_DONT_FOOL_ME);
                 return false;
             }
         }
@@ -73,6 +74,7 @@ public class Server implements Runnable {
         String receivedReady = worker.receiveMessageFromWorker();
         if (verifyReady(receivedReady)) {
             sendMessageToWorker(worker, Messages.OK);
+            // TODO: gestion de ce qu'on fait avec le worker
         } else {
             worker.closeConnection();
         }
