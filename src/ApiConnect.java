@@ -18,7 +18,6 @@ public class ApiConnect {
             URL url = URI.create(BASE_URL + function).toURL();
             HttpURLConnection con = getUrlConnection(bodyData, url);
             int responseCode = con.getResponseCode();
-            System.out.println(con.getResponseMessage());
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
                     StringBuilder response = new StringBuilder();
@@ -77,6 +76,7 @@ public class ApiConnect {
 
     public String validateWork(String workToValidate) {
         System.out.println("Validation du travail: " + workToValidate);
-        return connectToApi("/validate_work", workToValidate);
+        String codeResponse = connectToApi("/validate_work", workToValidate);
+        return
     }
 }
