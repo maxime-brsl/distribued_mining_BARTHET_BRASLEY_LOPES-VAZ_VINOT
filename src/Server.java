@@ -30,6 +30,7 @@ public class Server implements Runnable{
                 workers.add(worker);
                 new Thread(worker).start();
                 initProtocole(worker);
+                sendMessageToWorker(worker, "GIMME_PASSWORD");
             } catch (IOException e) {
                 LOG.warning("Erreur lors de la connexion du worker: " + e.getMessage());
             }
@@ -38,6 +39,10 @@ public class Server implements Runnable{
 
     public void initProtocole(final Worker worker) {
         worker.sendMessageToServer("WHO_ARE_YOU_?");
+    }
+
+    public void sendMessageToWorker(final Worker worker, String message) {
+        worker.sendMessageToServer(message);
     }
 
     public void cancelTask() {
