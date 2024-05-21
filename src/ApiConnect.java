@@ -17,7 +17,6 @@ public class ApiConnect {
         try {
             URL url = URI.create(BASE_URL + function).toURL();
             HttpURLConnection con = getUrlConnection(bodyData, url);
-            System.out.println(bodyData);
             int responseCode = con.getResponseCode();
             System.out.println(con.getResponseMessage());
             if (responseCode == HttpURLConnection.HTTP_OK) {
