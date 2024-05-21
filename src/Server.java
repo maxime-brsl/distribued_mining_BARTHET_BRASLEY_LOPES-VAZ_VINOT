@@ -1,7 +1,11 @@
 import java.io.IOException;
 import java.net.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class Server implements Runnable{
@@ -9,9 +13,11 @@ public class Server implements Runnable{
     private static final String AUTH_TOKEN = "reclRPzXSOmGArkLi";
     private ServerSocket serverSocket;
     private List<Worker> workers;
+    private ApiConnect apiConnect;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
 
     public Server(int port) {
+        apiConnect = new ApiConnect();
         try {
             serverSocket = new ServerSocket(port);
             workers = new ArrayList<>();
@@ -46,31 +52,31 @@ public class Server implements Runnable{
     }
 
     public void cancelTask() {
-        try {
-            URL url = URI.create(BASE_URL + "/cancel_work").toURL();
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            con.setRequestProperty("Authorization", "Bearer " + AUTH_TOKEN);
-
-            int responseCode = con.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                //TODO : Annuler la tâche sur le worker
-                System.out.println("Tache annulée avec succès.");
-            } else {
-                // Gérer les erreurs
-                LOG.warning("Error pour annuler la tâche. Code de réponse: " + responseCode);
-            }
-        } catch (IOException e) {
-            LOG.warning("Erreur: " + e.getMessage());
-        }
+//        if (apiConnect.cancelTask()) {
+//            System.out.println("Tache annulée avec succès.");
+//            //TODO : Annuler la tâche au worker
+//        } else {
+//            LOG.warning("Erreur lors de l'annulation de la tâche.");
+//        }
     }
 
     public void getWorkersStatus() {
         //TODO : Récupérer le status des workers
     }
 
-    public void solveTask(final int difficulty) {
-        //TODO : Résoudre la tâche
+    public String solveTask(final String difficulty) {
+        String data = apiConnect.generateWork(difficulty);
+        int startIndex = data.indexOf("\"data\":\"") + 8;
+        int endIndex = data.indexOf("\"", startIndex);
+        String workData = data.substring(startIndex, endIndex);
+        byte[] workBytes = workData.getBytes();
+        System.out.println("Travail généré ! ");
+        for (Worker worker: workers) {
+            Solution solution = worker.mine(workData, Integer.parseInt(difficulty));
+            String json = "{\"d\": " + solution.getDifficulty() + ", \"n\": \"" + solution.getNonce() + "\", \"h\": \"" + solution.getHash() + "\"}";
+            System.out.println(apiConnect.validateWork(json));
+        }
+        return workData;
     }
 
     @Override

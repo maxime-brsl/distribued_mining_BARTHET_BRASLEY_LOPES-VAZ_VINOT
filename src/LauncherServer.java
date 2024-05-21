@@ -44,8 +44,8 @@ public class LauncherServer {
                 if (parts.length < 2) {
                     LOG.info("Erreur: difficulté manquante");
                 } else {
-                    int difficulty = Integer.parseInt(parts[1]);
-//                    solveTask(difficulty);
+                    String difficulty = parts[1];
+                    server.solveTask(difficulty);
                 }
             } else {
                 LOG.info("Commande inconnue");
