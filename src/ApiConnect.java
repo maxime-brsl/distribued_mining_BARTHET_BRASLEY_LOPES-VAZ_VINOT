@@ -76,7 +76,6 @@ public class ApiConnect {
 
     public String validateWork(String workToValidate) {
         System.out.println("Validation du travail: " + workToValidate);
-        String codeResponse = connectToApi("/validate_work", workToValidate);
-        return
+        return connectToApi("/validate_work", workToValidate);
     }
 }
