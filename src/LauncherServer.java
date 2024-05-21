@@ -16,7 +16,6 @@ public class LauncherServer {
         while (true) {
             System.out.print("> ");
             final String commande = scanner.nextLine();
-
             if (("quit").equals(commande)) {
                 exit(0);
             } else {
@@ -27,36 +26,34 @@ public class LauncherServer {
 
     private void processCommand(String cmd) {
         try {
-            if (("cancel").equals(cmd)) {
-                server.cancelTask();
-            } else if (("status").equals(cmd)) {
-                server.getWorkersStatus();
-            } else if (("help").equals(cmd.trim())) {
-                // Afficher l'aide
-                System.out.println(" • status - afficher des informations sur les travailleurs connectés");
-                System.out.println(" • solve <d> - essayer de miner avec la difficulté spécifiée");
-                System.out.println(" • cancel - annuler une tache");
-                System.out.println(" • help - décrire les commandes disponibles");
-                System.out.println(" • quit - mettre fin au programme et quitter");
-            } else if (cmd.startsWith("solve")) {
-                // Récupérer la difficulté spécifiée par l'utilisateur
-                String[] parts = cmd.split(" ");
-                if (parts.length < 2) {
-                    LOG.info("Erreur: difficulté manquante");
-                } else {
-                    int difficulty = Integer.parseInt(parts[1]);
-//                    solveTask(difficulty);
-                }
-            } else {
-                LOG.info("Commande inconnue");
+            switch (cmd) {
+                case "cancel":
+                    // Annuler la tâche
+                    break;
+                case "status":
+                    // Afficher les informations sur les travailleurs connectés
+                    break;
+                case "help":
+                    // Afficher l'aide
+                    displayHelp();
+                    break;
+                case "solve":
+                    // Résoudre le problème
+                    break;
+                default:
+                    LOG.info("Commande inconnue");
             }
         } catch (Exception e) {
             LOG.warning("Erreur: " + e.getMessage());
         }
     }
 
-    public static Server getServer() {
-        return server;
+    private void displayHelp() {
+        System.out.println("Commandes disponibles:");
+        System.out.println("cancel: Annuler la tâche");
+        System.out.println("status: Afficher les informations sur les travailleurs connectés");
+        System.out.println("help: Afficher l'aide");
+        System.out.println("solve: Résoudre le problème");
     }
 
     public static void main(String[] args) throws Exception {
