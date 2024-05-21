@@ -10,7 +10,6 @@ public class Server implements Runnable {
     private List<Worker> workers;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
     private static final String PASSWORD = "mdp";
-    private static final String IDENTIFICATION = "ITS_ME";
 
     public Server(int port) {
         try {
@@ -26,26 +25,7 @@ public class Server implements Runnable {
         while (true) {
             try {
                 Worker worker = acceptNewWorker();
-                initProtocole(worker);
-                String receivedIdentification = worker.receiveMessageFromWorker();
-                if (verifyIdentification(receivedIdentification)) {
-                    sendMessageToWorker(worker, "GIMME_PASSWORD");
-                    String receivedPassword = worker.receiveMessageFromWorker();
-                    if (verifyPassword(receivedPassword)) {
-                        sendMessageToWorker(worker, "HELLO_YOU");
-                        workers.add(worker);
-                        String receivedReady = worker.receiveMessageFromWorker();
-                        if (verifyReady(receivedReady)) {
-                            sendMessageToWorker(worker, "OK");
-                        }
-                    } else {
-                        sendMessageToWorker(worker, "YOU_DONT_FOOL_ME");
-                        worker.closeConnection();
-                    }
-                } else {
-                    System.out.println("Échec de l'identification du worker.");
-                    worker.closeConnection();
-                }
+                handleWorker(worker);
             } catch (IOException e) {
                 LOG.warning("Erreur lors de la connexion du worker: " + e.getMessage());
             }
@@ -58,27 +38,63 @@ public class Server implements Runnable {
         return new Worker(workerSocket);
     }
 
-    public void initProtocole(final Worker worker) {
-        sendMessageToWorker(worker, "WHO_ARE_YOU_?");
+    private void handleWorker(Worker worker) throws IOException {
+        initProtocol(worker);
+        if (authenticateWorker(worker)) {
+            processWorker(worker);
+        } else {
+            worker.closeConnection();
+        }
     }
 
-    public void sendMessageToWorker(final Worker worker, String message) {
+    private void initProtocol(final Worker worker) {
+        sendMessageToWorker(worker, Messages.WHO_ARE_YOU);
+    }
+
+    private boolean authenticateWorker(Worker worker) throws IOException {
+        String receivedIdentification = worker.receiveMessageFromWorker();
+        if (verifyIdentification(receivedIdentification)) {
+            sendMessageToWorker(worker, Messages.GIMME_PASSWORD);
+            String receivedPassword = worker.receiveMessageFromWorker();
+            if (verifyPassword(receivedPassword)) {
+                return true;
+            } else {
+                sendMessageToWorker(worker, Messages.YOU_DONT_FOOL_ME);  // Utilisation de la constante YOU_DONT_FOOL_ME
+                return false;
+            }
+        }
+        return false;
+    }
+
+
+    private void processWorker(Worker worker) throws IOException {
+        sendMessageToWorker(worker, Messages.HELLO_YOU);
+        workers.add(worker);
+        String receivedReady = worker.receiveMessageFromWorker();
+        if (verifyReady(receivedReady)) {
+            sendMessageToWorker(worker, Messages.OK);
+        } else {
+            worker.closeConnection();
+        }
+    }
+
+    private void sendMessageToWorker(final Worker worker, String message) {
         worker.sendMessageToServer(message);
     }
 
-    public boolean verifyPassword(String password) {
+    private boolean verifyPassword(String password) {
         System.out.println("Message received : " + password);
         return password.equals("PASSWD " + PASSWORD);
     }
 
-    public boolean verifyIdentification(String identification) {
+    private boolean verifyIdentification(String identification) {
         System.out.println("Message received : " + identification);
-        return IDENTIFICATION.equals(identification);
+        return Messages.IDENTIFICATION.equals(identification);
     }
 
-    public boolean verifyReady(String ready) {
+    private boolean verifyReady(String ready) {
         System.out.println("Message received : " + ready);
-        return "READY".equals(ready);
+        return Messages.READY.equals(ready);
     }
 
     @Override
@@ -91,3 +107,4 @@ public class Server implements Runnable {
         new Thread(server).start();
     }
 }
+

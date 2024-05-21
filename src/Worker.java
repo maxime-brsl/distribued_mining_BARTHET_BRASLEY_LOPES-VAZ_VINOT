@@ -6,22 +6,20 @@ import java.net.Socket;
 import java.util.logging.Logger;
 
 public class Worker implements Runnable {
-    private static final int SERVER_PORT = 1337;
-    private final Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
-    private String password = "mdp";
-    private String state = "WAITING";
+    private static final int SERVER_PORT = 1337;
 
-    public Worker(Socket socket) {
+    private final Socket socket;
+    private final BufferedReader in;
+    private final PrintWriter out;
+    private final String password = "mdp";
+
+    private State state = State.WAITING;
+
+    public Worker(Socket socket) throws IOException {
         this.socket = socket;
-        try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            LOG.warning("Erreur lors de la création du worker: " + e.getMessage());
-        }
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.out = new PrintWriter(socket.getOutputStream(), true);
     }
 
     @Override
@@ -30,23 +28,28 @@ public class Worker implements Runnable {
             String message;
             while ((message = in.readLine()) != null) {
                 System.out.println("Message received : " + message);
-                communication(message);
+                handleMessage(message);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.severe("Erreur lors de la communication avec le serveur : " + e.getMessage());
+        } finally {
+            closeConnection();
         }
     }
 
-    public void communication(final String message) {
+    private void handleMessage(final String message) {
         switch (message) {
-            case "WHO_ARE_YOU_?" -> sendMessageToServer("ITS_ME");
-            case "GIMME_PASSWORD" -> sendMessageToServer("PASSWD " + this.password);
-            case "HELLO_YOU" -> {
-                this.state = "READY";
-                sendMessageToServer("READY");
+            case Messages.WHO_ARE_YOU -> sendMessageToServer(Messages.IDENTIFICATION);
+            case Messages.GIMME_PASSWORD -> sendMessageToServer("PASSWD " + password);
+            case Messages.HELLO_YOU -> {
+                state = State.READY;
+                sendMessageToServer(Messages.READY);
             }
-            case "YOU_DONT_FOOL_ME" -> closeConnection();
-            default -> System.out.println("Commande inconnue : " + message);
+            case Messages.YOU_DONT_FOOL_ME -> {
+                state = State.DISCONNECTED;
+                closeConnection();
+            }
+            default -> LOG.warning("Commande inconnue : " + message);
         }
     }
 
@@ -61,19 +64,26 @@ public class Worker implements Runnable {
 
     public void closeConnection() {
         try {
-            socket.close();
+            if (!socket.isClosed()) {
+                socket.close();
+                LOG.info("Connexion fermée.");
+            }
         } catch (IOException e) {
             LOG.warning("Erreur lors de la fermeture de la connexion: " + e.getMessage());
         }
     }
 
     public static void main(String[] args) {
-        try {
+        try  {
             Socket socket = new Socket("localhost", SERVER_PORT);
             Worker worker = new Worker(socket);
             new Thread(worker).start();
         } catch (IOException e) {
             LOG.warning("Erreur lors de la création du socket: " + e.getMessage());
         }
+    }
+
+    private enum State {
+        WAITING, READY, DISCONNECTED
     }
 }
