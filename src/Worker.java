@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -79,24 +80,6 @@ public class Worker implements Runnable {
     }
 
     /**
-     * Convertir un tableau de bytes en une chaine de caractères hexadécimale
-     *
-     * @param bytes tableau de bytes
-     * @return chaine de caractères hexadécimale
-     **/
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder(2 * bytes.length);
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
-
-    /**
      * Hasher une chaine de caractère avec l'algorithme SHA-256
      *
      * @param input chaine à hasher en bytes
@@ -106,7 +89,7 @@ public class Worker implements Runnable {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(input);
-            return bytesToHex(hash);
+            return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
