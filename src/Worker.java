@@ -20,7 +20,7 @@ public class Worker implements Runnable {
     private State state = State.WAITING;
     private MiningData miningData = new MiningData();
 
-    public Worker(Socket socket) {
+    public Worker(final Socket socket) {
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -126,21 +126,29 @@ public class Worker implements Runnable {
      * @param difficulty difficultée de minage
      * @return Solution trouvée
      **/
-    public Solution mine(byte[] data, int difficulty) {
+    public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump) {
         System.out.println("Minage en cours... ");
         String prefix = "0".repeat(difficulty);
 
-        int nonce = 0;
+        int nonce = workerId;
         String hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
         while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
-            nonce++;
+            nonce+=jump;
             hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
             System.out.println(hash + " " + nonce);
         }
         return new Solution(hash, Integer.toHexString(nonce), difficulty);
     }
 
-    private byte[] concatenateBytes(byte[] a, byte[] b) {
+    /*
+    * Concaténer deux tableaux de bytes
+    *
+    * @param a premier tableau
+    * @param b deuxième tableau
+    *
+    * @return tableau concaténé
+    */
+    private byte[] concatenateBytes(final byte[] a, final byte[] b) {
         byte[] result = new byte[a.length + b.length];
         System.arraycopy(a, 0, result, 0, a.length);
         System.arraycopy(b, 0, result, a.length, b.length);
@@ -153,7 +161,7 @@ public class Worker implements Runnable {
      * @param input chaine à hasher en bytes
      * @return le hash en hexadécimal
      **/
-    private String hashSHA256(byte[] input) {
+    private String hashSHA256(final byte[] input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(input);
