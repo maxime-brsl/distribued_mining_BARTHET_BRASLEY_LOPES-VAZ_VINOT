@@ -18,8 +18,8 @@ public class ApiConnect {
             URL url = URI.create(BASE_URL + function).toURL();
             HttpURLConnection con = getUrlConnection(bodyData, url);
             int responseCode = con.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
+            if (responseCode == HttpURLConnection.HTTP_OK || responseCode == 201) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
                     StringBuilder response = new StringBuilder();
                     String inputLine;
 
@@ -30,8 +30,7 @@ public class ApiConnect {
                     return response.toString();
                 }
             } else {
-                LOG.warning("Erreur: Réponse HTTP " + responseCode);
-                return null;
+                return String.valueOf(responseCode);
             }
         } catch (IOException e) {
             LOG.warning("Erreur: " + e.getMessage());
@@ -41,11 +40,8 @@ public class ApiConnect {
 
     private static HttpURLConnection getUrlConnection(String bodyData, URL url) throws IOException {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-        // Configurer l'en-tête d'autorisation
         con.setRequestProperty("Authorization", "Bearer " + AUTH_TOKEN);
 
-        // Configurer la méthode HTTP
         if (bodyData == null || bodyData.isEmpty()) {
             con.setRequestMethod("GET");
             con.setDoOutput(false);
@@ -55,9 +51,8 @@ public class ApiConnect {
             con.setRequestProperty("Accept", "application/json");
             con.setDoOutput(true);
 
-            // Écrire les données du corps dans la connexion
             try (OutputStream os = con.getOutputStream()) {
-                byte[] input = bodyData.getBytes("utf-8");
+                byte[] input = bodyData.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
         }
@@ -65,17 +60,35 @@ public class ApiConnect {
         return con;
     }
 
-
-    public String cancelTask() {
-        return connectToApi("/cancel", null);
+    public String codeResponse(String code) {
+        return switch (code) {
+            case "400" -> "Erreur: Requête invalide";
+            case "404" -> "Erreur: Ressource non trouvée";
+            case "409" -> "Erreur: Conflit, la solution a déjà été validé pour ce travail";
+            case "500" -> "Erreur: Erreur interne du serveur";
+            default -> null;
+        };
     }
 
-    public String generateWork(String difficulty) {
-        return connectToApi("/generate_work?d=" + difficulty, null);
+    public byte[] generateWork(String difficulty) {
+        String work = connectToApi("/generate_work?d=" + difficulty, null);
+        if (codeResponse(work) != null) {
+            System.out.println(codeResponse(work));
+            return null;
+        } else {
+            System.out.println("Travail récupéré !");
+            int startIndex = work.indexOf("\"data\":\"") + 8;
+            int endIndex = work.indexOf("\"", startIndex);
+            return work.substring(startIndex, endIndex).getBytes();
+        }
     }
 
-    public String validateWork(String workToValidate) {
-        System.out.println("Validation du travail: " + workToValidate);
-        return connectToApi("/validate_work", workToValidate);
+    public void validateWork(String workToValidate) {
+        String response = connectToApi("/validate_work", workToValidate);
+        if (codeResponse(response) != null) {
+            System.out.println(codeResponse(response));
+        } else {
+            System.out.println("Travail validé !");
+        }
     }
 }
