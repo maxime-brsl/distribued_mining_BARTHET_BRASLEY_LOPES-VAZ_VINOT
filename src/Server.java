@@ -107,7 +107,7 @@ public class Server implements Runnable{
         }
         for (int i = 0; i < workers.size(); i++) {
             Solution solution = workers.get(i).mine(work, Integer.parseInt(difficulty), i, workers.size());
-            String json = "{\"d\": " + solution.getDifficulty() + ", \"n\": \"" + solution.getNonce() + "\", \"h\": \"" + solution.getHash() + "\"}";
+            String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
             System.out.println(json);
             apiConnect.validateWork(json);
         }
