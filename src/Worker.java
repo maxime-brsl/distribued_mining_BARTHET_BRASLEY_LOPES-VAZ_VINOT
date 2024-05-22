@@ -62,14 +62,14 @@ public class Worker implements Runnable {
         System.out.println("Minage en cours... ");
         String prefix = "0".repeat(difficulty);
 
-        int nonce = workerId;
+        long nonce = workerId;
         String hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
         while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
             nonce+=jump;
             hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
             System.out.println(hash + " " + nonce);
         }
-        return new Solution(hash, Integer.toHexString(nonce), difficulty);
+        return new Solution(hash, Long.toHexString(nonce), difficulty);
     }
 
     /*
