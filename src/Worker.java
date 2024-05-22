@@ -48,7 +48,21 @@ public class Worker implements Runnable {
                 state = State.DISCONNECTED;
                 closeConnection();
             }
-            default -> LOG.warning("Commande inconnue : " + message);
+            case Messages.PROGRESS -> handleProgress(message);
+            case Messages.SOLVED -> handleSolved(message);
+            case Messages.CANCELLED -> handleCancelled(message);
+
+            default -> {
+                if (message.contains("NONCE")) {
+                    handleNonce(message);
+                } else if (message.contains("PAYLOAD")) {
+                    handlePayload(message);
+                }else if (message.contains("SOLVE")) {
+                    handleSolved(message);
+                }else {
+                    System.out.println("Message non reconnu : " + message);
+                }
+            }
         }
     }
 
@@ -61,6 +75,29 @@ public class Worker implements Runnable {
         String message = in.readLine();
         System.out.println("Message received : " + message);
         return message;
+    }
+
+    public void handleNonce(String message) {
+        // check si la chaîne à le bon format
+        // process le nonce
+    }
+
+    public void handlePayload(String message) {
+        // check si la chaîne à le bon format
+        // process le payload
+    }
+
+    public void handleSolved(String message) {
+        // check si la chaîne à le bon format
+        // process le solve
+    }
+
+    public void handleProgress(String message) {
+        // process le progress
+    }
+
+    public void handleCancelled(String message) {
+        // process le cancelled
     }
 
     public void closeConnection() {

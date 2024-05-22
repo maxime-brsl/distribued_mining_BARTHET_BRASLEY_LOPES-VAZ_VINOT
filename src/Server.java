@@ -75,6 +75,7 @@ public class Server implements Runnable {
         if (verifyReady(receivedReady)) {
             sendMessageToWorker(worker, Messages.OK);
             // TODO: gestion de ce qu'on fait avec le worker
+            sendMessageToWorker(worker, Messages.NONCE);
         } else {
             worker.closeConnection();
         }
