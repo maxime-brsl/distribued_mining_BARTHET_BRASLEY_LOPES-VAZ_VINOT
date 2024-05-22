@@ -6,6 +6,8 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -130,14 +132,49 @@ public class Worker implements Runnable {
         System.out.println("Minage en cours... ");
         String prefix = "0".repeat(difficulty);
 
-        long nonce = workerId;
-        String hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
+        Instant start = Instant.now();
+
+        byte[] nonce = BigInteger.valueOf(workerId).toByteArray();
+        byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
+        String hash = hashSHA256(concatenateBytes(data, nonce));
         while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
-            nonce+=jump;
-            hash = hashSHA256(concatenateBytes(data, BigInteger.valueOf(nonce).toByteArray()));
-            System.out.println(hash + " " + nonce);
+            nonce = incrementBytes(nonce, jumpBytes);
+            hash = hashSHA256(concatenateBytes(data, nonce));
         }
-        return new Solution(hash, Long.toHexString(nonce), difficulty);
+        Instant end = Instant.now();
+        timer(start, end);
+
+        String nonceHex = HexFormat.of().formatHex(nonce);
+        nonceHex = nonceHex.replaceFirst("^0+", "");
+        return new Solution(hash, nonceHex, difficulty);
+    }
+
+    /**
+     * Calculer la durée d'exécution du minage
+     *
+     * @param start Instant de début
+     * @param end Instant de fin
+
+    **/
+    private void timer(final Instant start, final Instant end) {
+        Duration timeElapsed = Duration.between(start, end);
+        double minutes = timeElapsed.toMinutes() + (timeElapsed.getSeconds() % 60) / 60.0;
+        minutes = Math.round(minutes * 100.0) / 100.0;
+        System.out.println("Durée de l'exécution: " + minutes + " minutes");
+    }
+
+    /**
+     * Incrémenter un tableau de bytes par un autre tableau de bytes
+     *
+     * @param original tableau original
+     * @param increment valeur d'incrément
+     * @return tableau incrémenté
+     **/
+    private byte[] incrementBytes(byte[] original, byte[] increment) {
+        BigInteger originalBigInt = new BigInteger(original);
+        BigInteger incrementBigInt = new BigInteger(increment);
+        BigInteger resultBigInt = originalBigInt.add(incrementBigInt);
+        return resultBigInt.toByteArray();
     }
 
     /**
