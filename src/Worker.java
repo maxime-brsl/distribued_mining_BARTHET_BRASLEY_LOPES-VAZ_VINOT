@@ -140,14 +140,14 @@ public class Worker implements Runnable {
         return new Solution(hash, Long.toHexString(nonce), difficulty);
     }
 
-    /*
+    /**
     * Concaténer deux tableaux de bytes
     *
     * @param a premier tableau
     * @param b deuxième tableau
     *
     * @return tableau concaténé
-    */
+    **/
     private byte[] concatenateBytes(final byte[] a, final byte[] b) {
         byte[] result = new byte[a.length + b.length];
         System.arraycopy(a, 0, result, 0, a.length);
