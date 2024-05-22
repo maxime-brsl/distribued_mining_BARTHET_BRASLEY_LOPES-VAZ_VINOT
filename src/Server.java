@@ -11,7 +11,7 @@ public class Server implements Runnable{
     private final ApiConnect apiConnect;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
 
-    public Server(int port) {
+    public Server(final int port) {
         apiConnect = new ApiConnect();
         try {
             serverSocket = new ServerSocket(port);
@@ -59,8 +59,8 @@ public class Server implements Runnable{
         if (work == null) {
             return;
         }
-        for (Worker worker: workers) {
-            Solution solution = worker.mine(work, Integer.parseInt(difficulty));
+        for (int i = 0; i < workers.size(); i++) {
+            Solution solution = workers.get(i).mine(work, Integer.parseInt(difficulty), i, workers.size());
             String json = "{\"d\": " + solution.getDifficulty() + ", \"n\": \"" + solution.getNonce() + "\", \"h\": \"" + solution.getHash() + "\"}";
             System.out.println(json);
             apiConnect.validateWork(json);

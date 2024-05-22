@@ -25,7 +25,7 @@ public class LauncherServer {
         }
     }
 
-    private void processCommand(String cmd) {
+    private void processCommand(final String cmd) {
         try {
             if (("cancel").equals(cmd)) {
                 server.cancelTask();
@@ -53,10 +53,6 @@ public class LauncherServer {
         } catch (Exception e) {
             LOG.warning("Erreur: " + e.getMessage());
         }
-    }
-
-    public static Server getServer() {
-        return server;
     }
 
     public static void main(String[] args) throws Exception {
