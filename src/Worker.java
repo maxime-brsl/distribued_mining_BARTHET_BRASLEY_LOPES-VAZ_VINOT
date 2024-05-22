@@ -4,26 +4,28 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.logging.Logger;
 
 public class Worker implements Runnable {
+    private BufferedReader in;
+    private PrintWriter out;
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private static final int SERVER_PORT = 1337;
-    private final Socket socket;
-    private final BufferedReader in;
-    private final PrintWriter out;
+    private Socket socket;
     private final String password = "mdp";
     private State state = State.WAITING;
     private MiningData miningData = new MiningData();
 
-    public Worker(Socket socket) throws IOException {
-        this.socket = socket;
-        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        this.out = new PrintWriter(socket.getOutputStream(), true);
+    public Worker(Socket socket) {
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+        } catch (IOException e) {
+            LOG.warning("Erreur lors de la création du worker: " + e.getMessage());
+        }
     }
 
     @Override
@@ -116,23 +118,15 @@ public class Worker implements Runnable {
         }
     }
 
-    public static void main(String[] args) {
-        try  {
-            Socket socket = new Socket("localhost", SERVER_PORT);
-            Worker worker = new Worker(socket);
-            new Thread(worker).start();
-        } catch (IOException e) {
-            LOG.warning("Erreur lors de la création du socket: " + e.getMessage());
-        }
-    }
-
-    // chatGPT --> à remodifier
-    private enum State {
-        WAITING, READY, DISCONNECTED
-    }
-
+    /**
+     * Miner un bloc de données avec une difficulté donnée
+     *
+     * @param data data à miner
+     * @param difficulty difficultée de minage
+     * @return Solution trouvée
+     **/
     public Solution mine(byte[] data, int difficulty) {
-        System.out.println("Mining... ");
+        System.out.println("Minage en cours... ");
         String prefix = "0".repeat(difficulty);
 
         int nonce = 0;
@@ -152,6 +146,12 @@ public class Worker implements Runnable {
         return result;
     }
 
+    /**
+     * Convertir un tableau de bytes en une chaine de caractères hexadécimale
+     *
+     * @param bytes tableau de bytes
+     * @return chaine de caractères hexadécimale
+     **/
     private String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder(2 * bytes.length);
         for (byte b : bytes) {
@@ -164,6 +164,12 @@ public class Worker implements Runnable {
         return hexString.toString();
     }
 
+    /**
+     * Hasher une chaine de caractère avec l'algorithme SHA-256
+     *
+     * @param input chaine à hasher en bytes
+     * @return le hash en hexadécimal
+     **/
     private String hashSHA256(byte[] input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -172,5 +178,20 @@ public class Worker implements Runnable {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("localhost", 1337);
+            Worker worker = new Worker(socket);
+            new Thread(worker).start();
+        } catch (IOException e) {
+            LOG.warning("Erreur lors de la création du socket: " + e.getMessage());
+        }
+    }
+
+    // chatGPT --> à remodifier
+    private enum State {
+        WAITING, READY, DISCONNECTED
     }
 }

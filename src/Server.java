@@ -1,17 +1,15 @@
 import java.io.IOException;
-import java.net.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 public class Server implements Runnable {
+public class Server implements Runnable{
     private ServerSocket serverSocket;
     private List<Worker> workers;
-    private ApiConnect apiConnect;
+    private final ApiConnect apiConnect;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
     private static final String PASSWORD = "mdp";
 
@@ -95,31 +93,24 @@ public class Server implements Runnable {
     }
 
     public void cancelTask() {
-//        if (apiConnect.cancelTask()) {
-//            System.out.println("Tache annulée avec succès.");
-//            //TODO : Annuler la tâche au worker
-//        } else {
-//            LOG.warning("Erreur lors de l'annulation de la tâche.");
-//        }
+        //TODO : Annuler la tache en cours du worker souhaité
     }
 
     private boolean verifyIdentification(String identification) {
         return Messages.IDENTIFICATION.equals(identification);
     }
 
-    public String solveTask(final String difficulty) {
-        String data = apiConnect.generateWork(difficulty);
-        int startIndex = data.indexOf("\"data\":\"") + 8;
-        int endIndex = data.indexOf("\"", startIndex);
-        String workData = data.substring(startIndex, endIndex);
-        byte[] workBytes = workData.getBytes();
-        System.out.println("Travail généré ! ");
-        for (Worker worker: workers) {
-            Solution solution = worker.mine(workBytes, Integer.parseInt(difficulty));
-            String json = "{\"d\": " + solution.getDifficulty() + ", \"n\": \"" + solution.getNonce() + "\", \"h\": \"" + solution.getHash() + "\"}";
-            System.out.println(apiConnect.validateWork(json));
+    public void solveTask(final String difficulty) {
+        byte[] work = apiConnect.generateWork(difficulty);
+        if (work == null) {
+            return;
         }
-        return workData;
+        for (Worker worker: workers) {
+            Solution solution = worker.mine(work, Integer.parseInt(difficulty));
+            String json = "{\"d\": " + solution.getDifficulty() + ", \"n\": \"" + solution.getNonce() + "\", \"h\": \"" + solution.getHash() + "\"}";
+            System.out.println(json);
+            apiConnect.validateWork(json);
+        }
     }
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);
