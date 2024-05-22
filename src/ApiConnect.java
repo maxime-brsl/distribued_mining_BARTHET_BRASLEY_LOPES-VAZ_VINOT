@@ -13,7 +13,7 @@ public class ApiConnect {
     private static final String AUTH_TOKEN = "reclRPzXSOmGArkLi";
     private static final Logger LOG = Logger.getLogger(ApiConnect.class.getName());
 
-    public String connectToApi(String function, String bodyData) {
+    public String connectToApi(final String function, final String bodyData) {
         try {
             URL url = URI.create(BASE_URL + function).toURL();
             HttpURLConnection con = getUrlConnection(bodyData, url);
@@ -38,7 +38,7 @@ public class ApiConnect {
         }
     }
 
-    private static HttpURLConnection getUrlConnection(String bodyData, URL url) throws IOException {
+    private static HttpURLConnection getUrlConnection(final String bodyData, final URL url) throws IOException {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestProperty("Authorization", "Bearer " + AUTH_TOKEN);
 
@@ -60,7 +60,7 @@ public class ApiConnect {
         return con;
     }
 
-    public String codeResponse(String code) {
+    public String codeResponse(final String code) {
         return switch (code) {
             case "400" -> "Erreur: Requête invalide";
             case "404" -> "Erreur: Ressource non trouvée";
@@ -70,7 +70,7 @@ public class ApiConnect {
         };
     }
 
-    public byte[] generateWork(String difficulty) {
+    public byte[] generateWork(final String difficulty) {
         String work = connectToApi("/generate_work?d=" + difficulty, null);
         if (codeResponse(work) != null) {
             System.out.println(codeResponse(work));
@@ -83,7 +83,7 @@ public class ApiConnect {
         }
     }
 
-    public void validateWork(String workToValidate) {
+    public void validateWork(final String workToValidate) {
         String response = connectToApi("/validate_work", workToValidate);
         if (codeResponse(response) != null) {
             System.out.println(codeResponse(response));
