@@ -47,7 +47,14 @@ public class Server implements Runnable{
     }
 
     public void cancelTask() {
-        //TODO : Annuler la tache en cours du worker souhaité
+        for (Worker worker : workers) {
+            try {
+                worker.sendMessageToServer("CANCELLED");
+            } catch (Exception e) {
+                LOG.warning("Erreur lors de l'envoi du message d'annulation au worker: " + e.getMessage());
+            }
+        }
+        LOG.info("Toutes les tâches en cours ont été annulées.");
     }
 
     public void getWorkersStatus() {
