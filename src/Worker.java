@@ -21,8 +21,10 @@ public class Worker implements Runnable {
     private final String password = "mdp";
     private State state = State.WAITING;
     private MiningData miningData = new MiningData();
+    private boolean isMining;
 
     public Worker(final Socket socket) {
+        isMining = false;
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -129,20 +131,23 @@ public class Worker implements Runnable {
      * @return Solution trouvée
      **/
     public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump) {
-        String prefix = "0".repeat(difficulty);
-
-        Instant start = Instant.now();
-
         byte[] nonce = BigInteger.valueOf(workerId).toByteArray();
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
+        String prefix = "0".repeat(difficulty);
         String hash = hashSHA256(concatenateBytes(data, nonce));
+
+        isMining = true;
+        Instant start = Instant.now();
+
         while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
             hash = hashSHA256(concatenateBytes(data, nonce));
-            out.println(HexFormat.of().formatHex(nonce));
+//            out.println(HexFormat.of().formatHex(nonce));
             nonce = incrementBytes(nonce, jumpBytes);
         }
+
         Instant end = Instant.now();
         timer(start, end);
+        isMining = false;
 
         String nonceHex = HexFormat.of().formatHex(nonce);
         nonceHex = nonceHex.replaceFirst("^0+", "");
@@ -206,6 +211,10 @@ public class Worker implements Runnable {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public boolean isMining() {
+        return isMining;
     }
 
     public static void main(String[] args) {

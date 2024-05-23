@@ -5,15 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
-public class Server implements Runnable {
 public class Server implements Runnable{
     private ServerSocket serverSocket;
     private List<Worker> workers;
     private final ApiConnect apiConnect;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
+    private List<Worker> availableWorkers = new ArrayList<>();
     private static final String PASSWORD = "mdp";
 
     public Server(final int port) {
@@ -109,6 +108,20 @@ public class Server implements Runnable{
     private boolean verifyIdentification(String identification) {
         return Messages.IDENTIFICATION.equals(identification);
     }
+    public void getWorkersStatus() {
+        for (int i = 0; i < workers.size(); i++) {
+            Worker worker = workers.get(i);
+            System.out.println("Worker " + i + " - is mining ? : " + worker.isMining());
+        }
+    }
+
+    public void isMining() {
+        for (Worker worker : workers) {
+            if (!worker.isMining()) {
+                availableWorkers.add(worker);
+            }
+        }
+    }
 
     public void solveTask(final String difficulty) {
         System.out.println("Minage en cours... ");
@@ -116,13 +129,16 @@ public class Server implements Runnable{
         if (work == null) {
             return;
         }
-        ExecutorService executor = Executors.newFixedThreadPool(workers.size());
+        isMining();
+        ExecutorService executor = Executors.newFixedThreadPool(availableWorkers.size());
         List<Future<Solution>> futures = new ArrayList<>();
-        for (int i = 0; i < workers.size(); i++) {
+        for (int i = 0; i < availableWorkers.size(); i++) {
             final int workerId = i;
             futures.add(executor.submit(() -> {
-                sendMessageToWorker(workers.get(workerId), "MINE");
-                return workers.get(workerId).mine(work, Integer.parseInt(difficulty), workerId, workers.size());
+                Worker worker = availableWorkers.get(workerId);
+                availableWorkers.remove(worker);
+                sendMessageToWorker(worker, "MINE :" + difficulty);
+                return worker.mine(work, Integer.parseInt(difficulty), workerId, availableWorkers.size());
             }));
         }
         executor.shutdown();
