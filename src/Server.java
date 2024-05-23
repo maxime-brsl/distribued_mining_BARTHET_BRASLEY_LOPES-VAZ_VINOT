@@ -104,8 +104,7 @@ public class Server implements Runnable{
                     String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
                     System.out.println("Solution trouvée par worker " + workerId + "  : " + json);
                     apiConnect.validateWork(json);
-                    Instant end = Instant.now();
-                    timer(start, end);
+                    timer(start, Instant.now());
                 } catch (Exception e) {
                     LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
                 }
