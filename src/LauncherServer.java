@@ -15,7 +15,6 @@ public class LauncherServer {
 
     public void run() {
         new Thread(server).start();
-        // écoute les commandes
         while (true) {
             final String commande = scanner.nextLine();
 
@@ -53,7 +52,7 @@ public class LauncherServer {
                 LOG.info("Commande inconnue");
             }
         } catch (Exception e) {
-            LOG.warning("Erreur: " + e.getMessage());
+            LOG.warning("Aucun worker connecté");
         }
     }
 
