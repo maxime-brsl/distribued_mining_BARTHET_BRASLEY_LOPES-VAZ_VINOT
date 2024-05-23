@@ -111,6 +111,7 @@ public class Server implements Runnable{
             });
         }
         executor.shutdown();
+        stopSignal.set(false);
     }
 
     /**
