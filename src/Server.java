@@ -103,6 +103,7 @@ public class Server implements Runnable{
         for (Worker worker : workers) {
             try {
                 worker.sendMessageToServer("CANCELLED");
+                stopSignal.set(true);
             } catch (Exception e) {
                 LOG.warning("Erreur lors de l'envoi du message d'annulation au worker: " + e.getMessage());
             }
@@ -183,6 +184,9 @@ public class Server implements Runnable{
         System.out.printf("Durée de l'exécution: %02d:%02d:%02d%n", hours, minutes, seconds);
     }
 
+    public void setStopSignalFalse() {
+        stopSignal.set(false);
+    }
 
     @Override
     public void run() {
