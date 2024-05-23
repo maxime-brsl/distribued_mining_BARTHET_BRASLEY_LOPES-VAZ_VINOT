@@ -150,7 +150,7 @@ public class Server implements Runnable{
                         return;
                     }
                     String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
-                    System.out.println(json);
+                    System.out.println("Solution trouvée par worker " + workerId + "  : " + json);
                     apiConnect.validateWork(json);
                     Instant end = Instant.now();
                     timer(start, end);
