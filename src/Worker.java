@@ -103,8 +103,8 @@ public class Worker implements Runnable {
      * @return tableau incrémenté
      **/
     private byte[] incrementBytes(byte[] original, byte[] increment) {
-        BigInteger originalBigInt = new BigInteger(original);
-        BigInteger incrementBigInt = new BigInteger(increment);
+        BigInteger originalBigInt = new BigInteger(1, original);
+        BigInteger incrementBigInt = new BigInteger(1, increment);
         BigInteger resultBigInt = originalBigInt.add(incrementBigInt);
         return resultBigInt.toByteArray();
     }
