@@ -1,10 +1,13 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class Server implements Runnable{
@@ -14,6 +17,7 @@ public class Server implements Runnable{
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
     private List<Worker> availableWorkers = new ArrayList<>();
     private static final String PASSWORD = "mdp";
+    private final AtomicBoolean stopSignal = new AtomicBoolean(false);
 
     public Server(final int port) {
         apiConnect = new ApiConnect();
@@ -125,37 +129,59 @@ public class Server implements Runnable{
 
     public void solveTask(final String difficulty) {
         System.out.println("Minage en cours... ");
+        Instant start = Instant.now();
         byte[] work = apiConnect.generateWork(difficulty);
         if (work == null) {
             return;
         }
         isMining();
-        ExecutorService executor = Executors.newFixedThreadPool(availableWorkers.size());
-        List<Future<Solution>> futures = new ArrayList<>();
-        for (int i = 0; i < availableWorkers.size(); i++) {
+
+        int sizeInitialAvailableWorkers = availableWorkers.size();
+        ExecutorService executor = Executors.newFixedThreadPool(sizeInitialAvailableWorkers);
+
+        for (int i = 0; i < sizeInitialAvailableWorkers; i++) {
             final int workerId = i;
-            futures.add(executor.submit(() -> {
-                Worker worker = availableWorkers.get(workerId);
-                availableWorkers.remove(worker);
-                sendMessageToWorker(worker, "MINE :" + difficulty);
-                return worker.mine(work, Integer.parseInt(difficulty), workerId, availableWorkers.size());
-            }));
+            executor.submit(() -> {
+                Worker worker = availableWorkers.removeFirst();
+                try {
+                    Solution solution = worker.mine(work, Integer.parseInt(difficulty), workerId, sizeInitialAvailableWorkers, stopSignal);
+                    stopSignal.set(true);
+                    if (solution == null) {
+                        return;
+                    }
+                    String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
+                    System.out.println(json);
+                    apiConnect.validateWork(json);
+                    Instant end = Instant.now();
+                    timer(start, end);
+                } catch (Exception e) {
+                    LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
+                }
+            });
         }
         executor.shutdown();
-        for (Future<Solution> future : futures) {
-            try {
-                Solution solution = future.get();
-                String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
-                System.out.println(json);
-                apiConnect.validateWork(json);
-            } catch (Exception e) {
-                LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
-            }
-        }
     }
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);
     }
+
+    /**
+     * Calculer la durée d'exécution du minage
+     *
+     * @param start Instant de début
+     * @param end Instant de fin
+
+     **/
+    private void timer(final Instant start, final Instant end) {
+        Duration timeElapsed = Duration.between(start, end);
+
+        long hours = timeElapsed.toHours();
+        long minutes = timeElapsed.toMinutesPart();
+        long seconds = timeElapsed.toSecondsPart();
+
+        System.out.printf("Durée de l'exécution: %02d:%02d:%02d%n", hours, minutes, seconds);
+    }
+
 
     @Override
     public void run() {

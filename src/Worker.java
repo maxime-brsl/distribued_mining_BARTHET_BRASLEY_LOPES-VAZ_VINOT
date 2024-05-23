@@ -6,10 +6,8 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.HexFormat;
-import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class Worker implements Runnable {
@@ -130,57 +128,42 @@ public class Worker implements Runnable {
      * @param difficulty difficultée de minage
      * @return Solution trouvée
      **/
-    public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump) {
+    public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump, final AtomicBoolean stopSignal) {
         byte[] nonce = BigInteger.valueOf(workerId).toByteArray();
+        String nonceFinal = "";
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
         String prefix = "0".repeat(difficulty);
         String hash = hashSHA256(concatenateBytes(data, nonce));
-
         isMining = true;
-        Instant start = Instant.now();
-
-        while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
+        while (!hash.startsWith(prefix)) {
+            if (stopSignal.get()) {
+                isMining = false;
+                return null;
+            }
             hash = hashSHA256(concatenateBytes(data, nonce));
-//            out.println(HexFormat.of().formatHex(nonce));
+            nonceFinal = HexFormat.of().formatHex(nonce);
+            out.println(nonceFinal);
             nonce = incrementBytes(nonce, jumpBytes);
         }
 
-        Instant end = Instant.now();
-        timer(start, end);
         isMining = false;
-
-        String nonceHex = HexFormat.of().formatHex(nonce);
-        nonceHex = nonceHex.replaceFirst("^0+", "");
-        return new Solution(hash, nonceHex, difficulty);
-    }
-
-    /**
-     * Calculer la durée d'exécution du minage
-     *
-     * @param start Instant de début
-     * @param end Instant de fin
-
-    **/
-    private void timer(final Instant start, final Instant end) {
-        Duration timeElapsed = Duration.between(start, end);
-        double minutes = timeElapsed.toMinutes() + (timeElapsed.getSeconds() % 60) / 60.0;
-        minutes = Math.round(minutes * 100.0) / 100.0;
-        System.out.println("Durée de l'exécution: " + minutes + " minutes");
+        return new Solution(hash, nonceFinal.replaceFirst("^0+", ""), difficulty);
     }
 
     /**
      * Incrémenter un tableau de bytes par un autre tableau de bytes
      *
-     * @param original tableau original
-     * @param increment valeur d'incrément
+     * @param nonce tableau original
+     * @param jump valeur d'incrément
      * @return tableau incrémenté
      **/
-    private byte[] incrementBytes(byte[] original, byte[] increment) {
-        BigInteger originalBigInt = new BigInteger(1, original);
-        BigInteger incrementBigInt = new BigInteger(1, increment);
-        BigInteger resultBigInt = originalBigInt.add(incrementBigInt);
-        return resultBigInt.toByteArray();
+    private byte[] incrementBytes(byte[] nonce, byte[] jump) {
+        BigInteger nonceBigInt = new BigInteger(1, nonce);
+        BigInteger jumpBigInt = new BigInteger(1, jump);
+        nonceBigInt = nonceBigInt.add(jumpBigInt);
+        return nonceBigInt.toByteArray();
     }
+
 
     /**
     * Concaténer deux tableaux de bytes
