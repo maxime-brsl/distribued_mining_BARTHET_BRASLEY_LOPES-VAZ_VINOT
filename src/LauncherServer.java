@@ -6,11 +6,9 @@ import java.util.logging.Logger;
 import static java.lang.System.exit;
 
 public class LauncherServer {
-
-    private static final int SERVER_PORT = 1337;
     private static final Logger LOG = Logger.getLogger(LauncherServer.class.getName());
+    private static final Server server = new Server(1337);
     private final Scanner scanner = new Scanner(System.in);
-    private static final Server server = new Server(SERVER_PORT);
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public void run() {
