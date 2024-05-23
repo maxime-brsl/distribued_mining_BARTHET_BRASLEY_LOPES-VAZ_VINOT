@@ -28,6 +28,7 @@ public class LauncherServer {
         try {
             if (("cancel").equals(cmd)) {
                 server.cancelTask();
+                server.setStopSignalFalse();
             } else if (("status").equals(cmd)) {
                 server.getWorkersStatus();
             } else if (("help").equals(cmd.trim())) {
