@@ -11,9 +11,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class Worker implements Runnable {
+    private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private BufferedReader in;
     private PrintWriter out;
-    private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private boolean isMining;
 
     public Worker(final Socket socket) {
@@ -56,7 +56,7 @@ public class Worker implements Runnable {
      * Miner un bloc de données avec une difficulté donnée
      *
      * @param data data à miner
-     * @param difficulty difficultée de minage
+     * @param difficulty difficulté de minage
      * @return Solution trouvée
      **/
     public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump, final AtomicBoolean stopSignal) {

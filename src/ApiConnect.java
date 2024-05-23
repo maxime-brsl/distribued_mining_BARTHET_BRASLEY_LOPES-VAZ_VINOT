@@ -9,9 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 public class ApiConnect {
+    private static final Logger LOG = Logger.getLogger(ApiConnect.class.getName());
     private static final String BASE_URL = "https://projet-raizo-idmc.netlify.app/.netlify/functions";
     private static final String AUTH_TOKEN = "reclRPzXSOmGArkLi";
-    private static final Logger LOG = Logger.getLogger(ApiConnect.class.getName());
 
     public String connectToApi(final String function, final String bodyData) {
         try {
@@ -19,7 +19,7 @@ public class ApiConnect {
             HttpURLConnection con = getUrlConnection(bodyData, url);
             int responseCode = con.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK || responseCode == 201) {
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
                     StringBuilder response = new StringBuilder();
                     String inputLine;
 

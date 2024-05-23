@@ -11,11 +11,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class Server implements Runnable{
+    private static final Logger LOG = Logger.getLogger(Server.class.getName());
     private ServerSocket serverSocket;
     private List<Worker> workers;
     private final ApiConnect apiConnect;
-    private static final Logger LOG = Logger.getLogger(Server.class.getName());
-    private List<Worker> availableWorkers = new ArrayList<>();
+    private final List<Worker> availableWorkers = new ArrayList<>();
     private final AtomicBoolean stopSignal = new AtomicBoolean(false);
 
     public Server(final int port) {
