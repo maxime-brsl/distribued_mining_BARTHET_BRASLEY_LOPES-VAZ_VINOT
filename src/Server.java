@@ -13,6 +13,7 @@ public class Server implements Runnable{
     private List<Worker> workers;
     private final ApiConnect apiConnect;
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
+    private List<Worker> availableWorkers = new ArrayList<>();
 
     public Server(final int port) {
         apiConnect = new ApiConnect();
@@ -61,7 +62,18 @@ public class Server implements Runnable{
     }
 
     public void getWorkersStatus() {
-        //TODO : Récupérer le status des workers
+        for (int i = 0; i < workers.size(); i++) {
+            Worker worker = workers.get(i);
+            System.out.println("Worker " + i + " - is mining ? : " + worker.isMining());
+        }
+    }
+
+    public void isMining() {
+        for (Worker worker : workers) {
+            if (!worker.isMining()) {
+                availableWorkers.add(worker);
+            }
+        }
     }
 
     public void solveTask(final String difficulty) {
@@ -70,13 +82,16 @@ public class Server implements Runnable{
         if (work == null) {
             return;
         }
-        ExecutorService executor = Executors.newFixedThreadPool(workers.size());
+        isMining();
+        ExecutorService executor = Executors.newFixedThreadPool(availableWorkers.size());
         List<Future<Solution>> futures = new ArrayList<>();
-        for (int i = 0; i < workers.size(); i++) {
+        for (int i = 0; i < availableWorkers.size(); i++) {
             final int workerId = i;
             futures.add(executor.submit(() -> {
-                sendMessageToWorker(workers.get(workerId), "MINE");
-                return workers.get(workerId).mine(work, Integer.parseInt(difficulty), workerId, workers.size());
+                Worker worker = availableWorkers.get(workerId);
+                availableWorkers.remove(worker);
+                sendMessageToWorker(worker, "MINE :" + difficulty);
+                return worker.mine(work, Integer.parseInt(difficulty), workerId, availableWorkers.size());
             }));
         }
         executor.shutdown();
