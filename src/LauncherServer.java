@@ -1,4 +1,6 @@
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import static java.lang.System.exit;
@@ -9,18 +11,18 @@ public class LauncherServer {
     private static final Logger LOG = Logger.getLogger(LauncherServer.class.getName());
     private final Scanner scanner = new Scanner(System.in);
     private static final Server server = new Server(SERVER_PORT);
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public void run() {
         new Thread(server).start();
         // écoute les commandes
         while (true) {
-            System.out.print("> ");
             final String commande = scanner.nextLine();
 
             if (("quit").equals(commande)) {
                 exit(0);
             } else {
-                processCommand(commande.trim());
+                executorService.submit(() -> processCommand(commande.trim()));
             }
         }
     }
