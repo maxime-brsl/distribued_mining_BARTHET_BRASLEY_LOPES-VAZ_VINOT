@@ -3,6 +3,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 public class Server implements Runnable {
@@ -108,15 +111,30 @@ public class Server implements Runnable{
     }
 
     public void solveTask(final String difficulty) {
+        System.out.println("Minage en cours... ");
         byte[] work = apiConnect.generateWork(difficulty);
         if (work == null) {
             return;
         }
+        ExecutorService executor = Executors.newFixedThreadPool(workers.size());
+        List<Future<Solution>> futures = new ArrayList<>();
         for (int i = 0; i < workers.size(); i++) {
-            Solution solution = workers.get(i).mine(work, Integer.parseInt(difficulty), i, workers.size());
-            String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
-            System.out.println(json);
-            apiConnect.validateWork(json);
+            final int workerId = i;
+            futures.add(executor.submit(() -> {
+                sendMessageToWorker(workers.get(workerId), "MINE");
+                return workers.get(workerId).mine(work, Integer.parseInt(difficulty), workerId, workers.size());
+            }));
+        }
+        executor.shutdown();
+        for (Future<Solution> future : futures) {
+            try {
+                Solution solution = future.get();
+                String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
+                System.out.println(json);
+                apiConnect.validateWork(json);
+            } catch (Exception e) {
+                LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
+            }
         }
     }
     private boolean verifyReady(String ready) {

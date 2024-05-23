@@ -129,7 +129,6 @@ public class Worker implements Runnable {
      * @return Solution trouvée
      **/
     public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump) {
-        System.out.println("Minage en cours... ");
         String prefix = "0".repeat(difficulty);
 
         Instant start = Instant.now();
@@ -138,8 +137,9 @@ public class Worker implements Runnable {
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
         String hash = hashSHA256(concatenateBytes(data, nonce));
         while (!(Objects.requireNonNull(hash).startsWith(prefix))) {
-            nonce = incrementBytes(nonce, jumpBytes);
             hash = hashSHA256(concatenateBytes(data, nonce));
+            out.println(HexFormat.of().formatHex(nonce));
+            nonce = incrementBytes(nonce, jumpBytes);
         }
         Instant end = Instant.now();
         timer(start, end);
