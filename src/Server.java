@@ -160,6 +160,7 @@ public class Server implements Runnable{
             });
         }
         executor.shutdown();
+        stopSignal.set(false);
     }
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);
