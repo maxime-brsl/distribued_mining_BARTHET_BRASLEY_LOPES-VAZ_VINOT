@@ -1,14 +1,17 @@
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import static java.lang.System.exit;
 
+/**
+ * Classe LauncherServer
+ * Permet de lancer le serveur et de faire l'interface utilisateur pour les commandes
+ */
 public class LauncherServer {
     private static final Logger LOG = Logger.getLogger(LauncherServer.class.getName());
     private static final Server server = new Server(1337);
     private final Scanner scanner = new Scanner(System.in);
+    // ExecutorService pour exécuter les commandes en parallèle et éviter de bloquer le serveur, c'est un groupe de threads
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public void run() {
@@ -23,7 +26,7 @@ public class LauncherServer {
         }
     }
 
-    private void processCommand(String cmd) {
+    private void processCommand(final String cmd) {
         try {
             if (("cancel").equals(cmd)) {
                 server.cancelTask();
@@ -62,7 +65,7 @@ public class LauncherServer {
         System.out.println("solve: Résoudre le problème");
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new LauncherServer().run();
     }
 }

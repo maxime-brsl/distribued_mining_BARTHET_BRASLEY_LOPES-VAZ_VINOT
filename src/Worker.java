@@ -10,6 +10,10 @@ import java.util.HexFormat;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
+/**
+ * Classe Worker
+ * Représente un worker qui peut miner un bloc
+ **/
 public class Worker implements Runnable {
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private BufferedReader in;
@@ -22,6 +26,7 @@ public class Worker implements Runnable {
     private boolean isMining;
 
     public Worker(final Socket socket) {
+        this.socket = socket;
         isMining = false;
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -40,7 +45,7 @@ public class Worker implements Runnable {
                 handleMessage(message);
             }
         } catch (IOException e) {
-            LOG.severe("Erreur lors de la communication avec le serveur : " + e.getMessage());
+            LOG.warning("Erreur lors de la lecture du message: " + e.getMessage());
         } finally {
             closeConnection();
         }
@@ -76,7 +81,7 @@ public class Worker implements Runnable {
         }
     }
 
-    public void sendMessageToServer(String message) {
+    public void sendMessageToServer(final String message) {
         out.println(message);
         System.out.println("Message sent : " + message);
     }
@@ -164,7 +169,6 @@ public class Worker implements Runnable {
         return nonceBigInt.toByteArray();
     }
 
-
     /**
     * Concaténer deux tableaux de bytes
     *
@@ -183,19 +187,24 @@ public class Worker implements Runnable {
     /**
      * Hasher une chaine de caractère avec l'algorithme SHA-256
      *
-     * @param input chaine à hasher en bytes
+     * @param data chaine à hasher en bytes
      * @return le hash en hexadécimal
      **/
-    private String hashSHA256(final byte[] input) {
+    private String hashSHA256(final byte[] data) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input);
+            byte[] hash = digest.digest(data);
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Vérifier si le worker est en train de miner
+     *
+     * @return true si le worker est en train de miner, false sinon
+     **/
     public boolean isMining() {
         return isMining;
     }
