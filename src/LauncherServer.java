@@ -1,4 +1,6 @@
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import static java.lang.System.exit;
@@ -31,16 +33,12 @@ public class LauncherServer {
             if (("cancel").equals(cmd)) {
                 server.cancelTask();
                 // Mettre le signal d'arrêt à faux pour permettre de relancer le minage
-                server.setStopSignalFalse();
+                //server.setStopSignalFalse();
             } else if (("status").equals(cmd)) {
                 server.getWorkersStatus();
             } else if (("help").equals(cmd.trim())) {
                 // Afficher l'aide
-                System.out.println(" • status - afficher des informations sur les travailleurs connectés");
-                System.out.println(" • solve <d> - essayer de miner avec la difficulté spécifiée");
-                System.out.println(" • cancel - annuler une tache");
-                System.out.println(" • help - décrire les commandes disponibles");
-                System.out.println(" • quit - mettre fin au programme et quitter");
+                displayHelp();
             } else if (cmd.startsWith("solve")) {
                 // Récupérer la difficulté spécifiée par l'utilisateur
                 String[] parts = cmd.split(" ");
@@ -59,11 +57,11 @@ public class LauncherServer {
     }
 
     private void displayHelp() {
-        System.out.println("Commandes disponibles:");
-        System.out.println("cancel: Annuler la tâche");
-        System.out.println("status: Afficher les informations sur les travailleurs connectés");
-        System.out.println("help: Afficher l'aide");
-        System.out.println("solve: Résoudre le problème");
+        System.out.println(" • status - afficher des informations sur les travailleurs connectés");
+        System.out.println(" • solve <d> - essayer de miner avec la difficulté spécifiée");
+        System.out.println(" • cancel - annuler une tache");
+        System.out.println(" • help - décrire les commandes disponibles");
+        System.out.println(" • quit - mettre fin au programme et quitter");
     }
 
     public static void main(String[] args) {

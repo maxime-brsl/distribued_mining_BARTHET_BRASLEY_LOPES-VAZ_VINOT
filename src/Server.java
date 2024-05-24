@@ -20,7 +20,6 @@ public class Server implements Runnable{
     private List<Worker> workers;
     private List<Worker> availableWorkers = new ArrayList<>();
     private static final String PASSWORD = "mdp";
-    private final AtomicBoolean stopSignal = new AtomicBoolean(false);
     private final ApiConnect apiConnect;
     // Variable partagée entre les threads pour arrêter le minage
     // C'est une variable atomique pour éviter les problèmes de concurrence
@@ -117,7 +116,8 @@ public class Server implements Runnable{
             } catch (Exception e) {
                 LOG.warning("Erreur lors de l'envoi du message d'annulation au worker: " + e.getMessage());
             }
-        LOG.info("Toutes les tâches en cours ont été annulées.");
+            LOG.info("Toutes les tâches en cours ont été annulées.");
+        }
     }
 
     private boolean verifyIdentification(String identification) {
@@ -211,24 +211,9 @@ public class Server implements Runnable{
     }
 
     /**
-     * Calculer la durée d'exécution du minage
-     *
-     * @param start Instant de début
-     * @param end Instant de fin
-     **/
-    private void timer(final Instant start, final Instant end) {
-        Duration timeElapsed = Duration.between(start, end);
-
-        long hours = timeElapsed.toHours();
-        long minutes = timeElapsed.toMinutesPart();
-        long seconds = timeElapsed.toSecondsPart();
-
-        System.out.printf("Durée de l'exécution: %02d:%02d:%02d%n", hours, minutes, seconds);
-    }
-
-    /**
     * Remet le signal d'arrêt à faux
     **/
+    /*
     public void setStopSignalFalse() {
         stopSignal.set(false);
         int sizeInitialAvailableWorkers = availableWorkers.size();
@@ -256,6 +241,7 @@ public class Server implements Runnable{
         executor.shutdown();
         stopSignal.set(false);
     }
+    */
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);
     }
@@ -275,10 +261,6 @@ public class Server implements Runnable{
         long seconds = timeElapsed.toSecondsPart();
 
         System.out.printf("Durée de l'exécution: %02d:%02d:%02d%n", hours, minutes, seconds);
-    }
-
-    public void setStopSignalFalse() {
-        stopSignal.set(false);
     }
 
     @Override
