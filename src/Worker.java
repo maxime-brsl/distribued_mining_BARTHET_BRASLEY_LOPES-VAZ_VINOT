@@ -14,7 +14,6 @@ public class Worker implements Runnable {
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private BufferedReader in;
     private PrintWriter out;
-    private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private static final int SERVER_PORT = 1337;
     private Socket socket;
     private final String password = "mdp";
