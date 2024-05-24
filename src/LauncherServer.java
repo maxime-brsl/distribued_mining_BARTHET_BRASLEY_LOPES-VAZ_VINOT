@@ -5,6 +5,10 @@ import java.util.logging.Logger;
 
 import static java.lang.System.exit;
 
+/**
+ * Classe LauncherServer
+ * Permet de lancer le serveur et de faire l'interface utilisateur pour les commandes
+ */
 public class LauncherServer {
     private static final Logger LOG = Logger.getLogger(LauncherServer.class.getName());
     private static final Server server = new Server(1337);
