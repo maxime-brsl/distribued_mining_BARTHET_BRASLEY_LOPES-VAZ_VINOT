@@ -52,7 +52,7 @@ public class LauncherServer {
                 LOG.info("Commande inconnue");
             }
         } catch (Exception e) {
-            LOG.warning("Aucun worker connecté");
+            LOG.warning("Erreur lors de l'exécution de la commande: " + e.getMessage());
         }
     }
 

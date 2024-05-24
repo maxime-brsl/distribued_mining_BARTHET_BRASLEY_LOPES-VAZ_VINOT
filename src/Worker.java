@@ -18,7 +18,7 @@ public class Worker implements Runnable {
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private BufferedReader in;
     private PrintWriter out;
-    private Socket socket;
+    private final Socket socket;
     private final String password = "mdp";
     private State state = State.WAITING;
 
@@ -197,12 +197,12 @@ public class Worker implements Runnable {
     }
 
     /**
-     * Vérifier si le worker est en train de miner
+     * Récupérer l'état du worker
      *
-     * @return true si le worker est en train de miner, false sinon
+     * @return état du workerst
      **/
     public State getState() {
-        return state;
+        return this.state;
     }
 
     public static void main(String[] args) {

@@ -130,7 +130,7 @@ public class Server implements Runnable{
     public void getWorkersStatus() {
         for (int i = 0; i < workers.size(); i++) {
             Worker worker = workers.get(i);
-            System.out.println("Worker " + i + " - Status : " + worker.getState().toString());
+            System.out.println("Worker " + i + " - Status : " + worker.getState());
         }
     }
 
