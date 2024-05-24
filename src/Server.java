@@ -123,7 +123,7 @@ public class Server implements Runnable{
             //Pour chaque worker disponible, on crée un thread qui va miner
             executor.submit(() -> {
                 //Comme on utilise un worker, on le retire de la liste des workers disponibles et on le stocke pour le faire miner
-                Worker worker = availableWorkers.removeFirst();
+                Worker worker = availableWorkers.remove(0);
                 try {
                     Solution solution = worker.mine(work, Integer.parseInt(difficulty), workerId, sizeInitialAvailableWorkers, stopSignal);
 
