@@ -18,16 +18,12 @@ public class Worker implements Runnable {
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private BufferedReader in;
     private PrintWriter out;
-    private static final int SERVER_PORT = 1337;
     private Socket socket;
     private final String password = "mdp";
     private State state = State.WAITING;
-    private MiningData miningData = new MiningData();
-    private boolean isMining;
 
     public Worker(final Socket socket) {
         this.socket = socket;
-        isMining = false;
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -139,10 +135,10 @@ public class Worker implements Runnable {
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
         String prefix = "0".repeat(difficulty);
         String hash = hashSHA256(concatenateBytes(data, nonce));
-        isMining = true;
+        state = State.MINING;
         while (!hash.startsWith(prefix)) {
             if (stopSignal.get()) {
-                isMining = false;
+                state = State.READY;
                 return null;
             }
             hash = hashSHA256(concatenateBytes(data, nonce));
@@ -151,7 +147,7 @@ public class Worker implements Runnable {
             nonce = incrementBytes(nonce, jumpBytes);
         }
 
-        isMining = false;
+        state = State.READY;
         return new Solution(hash, nonceFinal.replaceFirst("^0+", ""), difficulty);
     }
 
@@ -205,8 +201,8 @@ public class Worker implements Runnable {
      *
      * @return true si le worker est en train de miner, false sinon
      **/
-    public boolean isMining() {
-        return isMining;
+    public State getState() {
+        return state;
     }
 
     public static void main(String[] args) {
@@ -217,10 +213,5 @@ public class Worker implements Runnable {
         } catch (IOException e) {
             LOG.warning("Erreur lors de la création du socket: " + e.getMessage());
         }
-    }
-
-    // chatGPT --> à remodifier
-    private enum State {
-        WAITING, READY, DISCONNECTED
     }
 }

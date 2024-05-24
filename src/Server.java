@@ -116,8 +116,8 @@ public class Server implements Runnable{
             } catch (Exception e) {
                 LOG.warning("Erreur lors de l'envoi du message d'annulation au worker: " + e.getMessage());
             }
-            LOG.info("Toutes les tâches en cours ont été annulées.");
         }
+        LOG.info("Toutes les tâches en cours ont été annulées.");
     }
 
     private boolean verifyIdentification(String identification) {
@@ -130,11 +130,7 @@ public class Server implements Runnable{
     public void getWorkersStatus() {
         for (int i = 0; i < workers.size(); i++) {
             Worker worker = workers.get(i);
-            System.out.println("Worker " + i + " - is mining ? : " + worker.isMining());
-        }
-        for (int i = 0; i < workers.size(); i++) {
-            Worker worker = workers.get(i);
-            System.out.println("Worker " + i + " - is mining ? : " + worker.isMining());
+            System.out.println("Worker " + i + " - Status : " + worker.getState().toString());
         }
     }
 
@@ -143,15 +139,7 @@ public class Server implements Runnable{
      **/
     public void updateAvailaibleWorkers() {
         for (Worker worker : workers) {
-            if (!worker.isMining()) {
-                availableWorkers.add(worker);
-            }
-        }
-    }
-
-    public void isMining() {
-        for (Worker worker : workers) {
-            if (!worker.isMining()) {
+            if (worker.getState() != State.MINING) {
                 availableWorkers.add(worker);
             }
         }
