@@ -13,6 +13,7 @@ public class LauncherServer {
     private static final Logger LOG = Logger.getLogger(LauncherServer.class.getName());
     private static final Server server = new Server(1337);
     private final Scanner scanner = new Scanner(System.in);
+    // ExecutorService pour exécuter les commandes en parallèle et éviter de bloquer le serveur, c'est un groupe de threads
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public void run() {
