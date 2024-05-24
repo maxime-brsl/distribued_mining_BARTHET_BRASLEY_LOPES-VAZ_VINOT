@@ -198,38 +198,6 @@ public class Server implements Runnable{
         stopSignal.set(false);
     }
 
-    /**
-    * Remet le signal d'arrêt à faux
-    **/
-    /*
-    public void setStopSignalFalse() {
-        stopSignal.set(false);
-        int sizeInitialAvailableWorkers = availableWorkers.size();
-        ExecutorService executor = Executors.newFixedThreadPool(sizeInitialAvailableWorkers);
-
-        for (int i = 0; i < sizeInitialAvailableWorkers; i++) {
-            final int workerId = i;
-            executor.submit(() -> {
-                Worker worker = availableWorkers.removeFirst();
-                try {
-                    Solution solution = worker.mine(work, Integer.parseInt(difficulty), workerId, sizeInitialAvailableWorkers, stopSignal);
-                    stopSignal.set(true);
-                    if (solution == null) {
-                        return;
-                    }
-                    String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
-                    System.out.println("Solution trouvée par worker " + workerId + "  : " + json);
-                    apiConnect.validateWork(json);
-                    timer(start, Instant.now());
-                } catch (Exception e) {
-                    LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
-                }
-            });
-        }
-        executor.shutdown();
-        stopSignal.set(false);
-    }
-    */
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);
     }
