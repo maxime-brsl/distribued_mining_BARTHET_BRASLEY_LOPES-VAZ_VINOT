@@ -227,7 +227,7 @@ public class Server implements Runnable{
     }
 
     /**
-    * Setter pour le signal d'arrêt
+    * Remet le signal d'arrêt à faux
     **/
     public void setStopSignalFalse() {
         stopSignal.set(false);

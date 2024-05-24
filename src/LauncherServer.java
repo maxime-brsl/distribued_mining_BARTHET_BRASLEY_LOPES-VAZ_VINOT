@@ -30,6 +30,7 @@ public class LauncherServer {
         try {
             if (("cancel").equals(cmd)) {
                 server.cancelTask();
+                // Mettre le signal d'arrêt à faux pour permettre de relancer le minage
                 server.setStopSignalFalse();
             } else if (("status").equals(cmd)) {
                 server.getWorkersStatus();
