@@ -114,8 +114,9 @@ public class ApiConnect {
             //On récupère un format JSON, on extrait donc la donnée de travail
             int startIndex = work.indexOf("\"data\":\"") + 8;
             int endIndex = work.indexOf("\"", startIndex);
-            return work.substring(startIndex, endIndex).getBytes();
-        }
+            return work.substring(startIndex, endIndex);
+        }*/
+        return "tr6swzsc6k3s50q1mrwtjle7y6j65un64cc5c5bzi4ic1kq6lln";
     }
 
     /**
