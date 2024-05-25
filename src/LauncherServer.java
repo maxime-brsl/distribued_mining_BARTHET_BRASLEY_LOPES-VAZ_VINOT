@@ -38,14 +38,7 @@ public class LauncherServer {
                 // Afficher l'aide
                 displayHelp();
             } else if (cmd.startsWith("solve")) {
-                // Récupérer la difficulté spécifiée par l'utilisateur
-                String[] parts = cmd.split(" ");
-                if (parts.length < 2) {
-                    LOG.info("Erreur: difficulté manquante");
-                } else {
-                    String difficulty = parts[1];
-                    server.solveTask(difficulty);
-                }
+                handleSolveCommand(cmd);
             } else {
                 LOG.info("Commande inconnue");
             }
@@ -60,6 +53,17 @@ public class LauncherServer {
         System.out.println(" • cancel - annuler une tache");
         System.out.println(" • help - décrire les commandes disponibles");
         System.out.println(" • quit - mettre fin au programme et quitter");
+    }
+
+    private void handleSolveCommand(final String cmd) {
+        // Récupérer la difficulté spécifiée par l'utilisateur
+        String[] parts = cmd.split(" ");
+        if (parts.length < 2) {
+            LOG.info("Erreur: difficulté manquante");
+        } else {
+            String difficulty = parts[1];
+            server.solveTask(difficulty);
+        }
     }
 
     public static void main(String[] args) {

@@ -65,7 +65,7 @@ public class Worker implements Runnable {
                 closeConnection();
             }
             case Messages.OK -> setWorkerState(State.READY);
-            case Messages.PROGRESS -> handleProgress(message);
+            case Messages.PROGRESS -> handleProgress();
             case Messages.SOLVED -> handleSolved(message);
             case Messages.CANCELLED -> handleCancelled(message);
 
@@ -118,8 +118,8 @@ public class Worker implements Runnable {
         // process le solve
     }
 
-    public void handleProgress(String message) {
-        // process le progress
+    public void handleProgress() {
+        sendMessageToServer( getState().toString());
     }
 
     public void handleCancelled(String message) {

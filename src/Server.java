@@ -41,6 +41,7 @@ public class Server implements Runnable{
             try {
                 Worker worker = acceptNewWorker();
                 handleWorker(worker);
+
             } catch (IOException e) {
                 LOG.warning("Erreur lors de la connexion du worker: " + e.getMessage());
             }
@@ -97,7 +98,7 @@ public class Server implements Runnable{
     }
 
     private void sendMessageToWorker(final Worker worker, String message) {
-        worker.sendMessageToServer(message);
+        worker.sendMessageToServer("current state: " + message);
     }
 
     
@@ -129,9 +130,8 @@ public class Server implements Runnable{
             System.out.println("Aucun worker connecté");
             return;
         }
-        for (int i = 0; i < workers.size(); i++) {
-            Worker worker = workers.get(i);
-            System.out.println("Worker " + i + " - Status : " + worker.getState());
+        for (Worker worker : workers) {
+            sendMessageToWorker(worker, Messages.PROGRESS);
         }
     }
 
