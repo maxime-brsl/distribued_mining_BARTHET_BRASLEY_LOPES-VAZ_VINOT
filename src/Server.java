@@ -158,7 +158,7 @@ public class Server implements Runnable{
         //Enregistre l'instant de départ du minage pour le calcul du temps écoulé
         Instant start = Instant.now();
 
-        byte[] work = apiConnect.generateWork(difficulty);
+        String work = apiConnect.generateWork(difficulty);
         if (work == null) {
             return;
         }
@@ -178,23 +178,13 @@ public class Server implements Runnable{
                 Worker worker = availableWorkers.remove(0);
                 try {
 
-                    sendMessageToWorker(worker, "NONCE "+workerId+" "+sizeInitialAvailableWorkers);
-                    sendMessageToWorker(worker, "PAYLOAD "+work);
-                    sendMessageToWorker(worker, "SOLVE "+difficulty);
+                    sendMessageToWorker(worker, Messages.NONCE+" "+workerId+" "+sizeInitialAvailableWorkers);
+                    sendMessageToWorker(worker, Messages.PAYLOAD+" "+work);
+                    sendMessageToWorker(worker, Messages.SOLVE+" "+difficulty);
 
                     System.out.println("Minage en cours... ");
 
-                    Solution solution = worker.mine(work, Integer.parseInt(difficulty), workerId, sizeInitialAvailableWorkers, stopSignal);
-
-                    //Si on a trouvé une solution, on arrête les autres workers
-                    stopSignal.set(true);
-                    if (solution == null) {
-                        return;
-                    }
-                    //On formate la solution dans le bon format JSON pour l'envoyer à l'API
-                    String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
-                    System.out.println("Solution trouvée par worker " + workerId + "  : " + json);
-                    apiConnect.validateWork(json);
+                    //TODO régler pb timer débute qd je lance solve(), et finit qd je finis found()
                     timer(start, Instant.now());
                 } catch (Exception e) {
                     LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
