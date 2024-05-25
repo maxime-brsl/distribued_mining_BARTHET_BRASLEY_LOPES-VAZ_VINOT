@@ -71,7 +71,7 @@ public class Worker implements Runnable {
                 } else if (message.contains("PAYLOAD")) {
                     handlePayload(message);
                 }else if (message.contains("SOLVE")) {
-                    handleSolved(message);
+                    handleSolve(message);
                 }else {
                     System.out.println("Message non reconnu : " + message);
                 }
@@ -98,6 +98,11 @@ public class Worker implements Runnable {
     public void handlePayload(String message) {
         // check si la chaîne à le bon format
         // process le payload
+    }
+
+    public void handleSolve(String message) {
+        // check si la chaîne à le bon format
+        // process le solve
     }
 
     public void handleSolved(String message) {
