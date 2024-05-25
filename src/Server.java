@@ -20,14 +20,11 @@ public class Server implements Runnable{
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
     private ServerSocket serverSocket;
     private List<Worker> workers;
-    private List<Worker> availableWorkers = new ArrayList<>();
+    private final List<Worker> availableWorkers = new ArrayList<>();
     private static final String PASSWORD = "mdp";
     private final ApiConnect apiConnect;
     private String hash;
     private String nonce;
-    // Variable partagée entre les threads pour arrêter le minage
-    // C'est une variable atomique pour éviter les problèmes de concurrence
-    private final AtomicBoolean stopSignal = new AtomicBoolean(false);
 
     public Server(final int port) {
         apiConnect = new ApiConnect();
@@ -58,7 +55,7 @@ public class Server implements Runnable{
         return new Worker(workerSocket);
     }
 
-    private void handleWorker(Worker worker) throws IOException {
+    private void handleWorker(final Worker worker) throws IOException {
         initProtocol(worker);
         if (authenticateWorker(worker)) {
             processWorker(worker);
@@ -88,7 +85,7 @@ public class Server implements Runnable{
     }
 
 
-    private void processWorker(Worker worker) throws IOException {
+    private void processWorker(final Worker worker) throws IOException {
         sendMessageToWorker(worker, Messages.HELLO_YOU);
         workers.add(worker);
         String receivedReady = worker.displayReceivedMessageFromWorker();
@@ -104,7 +101,7 @@ public class Server implements Runnable{
     }
 
     
-    private boolean verifyPassword(String password) {
+    private boolean verifyPassword(final String password) {
         return password.equals("PASSWD " + PASSWORD);
     }
     
@@ -115,7 +112,6 @@ public class Server implements Runnable{
         for (Worker worker : workers) {
             try {
                 worker.sendMessageToServer("CANCELLED");
-                stopSignal.set(true);
             } catch (Exception e) {
                 LOG.warning("Erreur lors de l'envoi du message d'annulation au worker: " + e.getMessage());
             }
@@ -209,8 +205,6 @@ public class Server implements Runnable{
         }
         //On arrête l'ensemble des threads
         executor.shutdown();
-        //On remet le signal d'arrêt à faux pour les prochains minages
-        stopSignal.set(false);
     }
 
 
