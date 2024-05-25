@@ -103,8 +103,8 @@ public class ApiConnect {
      * @param difficulty difficulté du travail
      * @return travail généré
      */
-    public byte[] generateWork(final String difficulty) {
-        String work = connectToApi("/generate_work?d=" + difficulty, null);
+    public String generateWork(final String difficulty) {
+        /*String work = connectToApi("/generate_work?d=" + difficulty, null);
         if (codeResponse(work) != null) {
             System.out.println(codeResponse(work));
             return null;
