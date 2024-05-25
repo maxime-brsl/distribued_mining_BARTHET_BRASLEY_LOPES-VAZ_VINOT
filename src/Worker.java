@@ -38,8 +38,12 @@ public class Worker implements Runnable {
         try {
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("Message received : " + message);
-                handleMessage(message);
+                if (message.contains("Minage du bloc: ")) {
+                    System.out.println(message);
+                } else {
+                    System.out.println("Message received : " + message);
+                    handleMessage(message);
+                }
             }
         } catch (IOException e) {
             LOG.warning("Erreur lors de la lecture du message: " + e.getMessage());
@@ -74,7 +78,9 @@ public class Worker implements Runnable {
                     handleSolve(message);
                 }else if (message.contains("SOLVED")) {
                     handleSolved(message);
-                } else {
+                } else if (message.contains("Minage du bloc: ")) {
+                    // do nothing
+                }else{
                     System.out.println("Message non reconnu : " + message);
                 }
             }
@@ -152,7 +158,7 @@ public class Worker implements Runnable {
             }
             hash = hashSHA256(concatenateBytes(data, nonce));
             nonceFinal = HexFormat.of().formatHex(nonce);
-            out.println(nonceFinal);
+            out.println("Minage du bloc: " + nonceFinal);
             nonce = incrementBytes(nonce, jumpBytes);
         }
 
