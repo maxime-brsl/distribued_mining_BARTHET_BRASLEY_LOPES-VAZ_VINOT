@@ -26,7 +26,7 @@ public class Worker implements Runnable {
     private int start = -1;
     private int increment = -1;
     private String nonceFinal = "";
-    private final AtomicBoolean stopSignal = new AtomicBoolean(false);
+    private volatile Thread miningThread;
 
 
     public Worker(final Socket socket) {
@@ -74,7 +74,7 @@ public class Worker implements Runnable {
             case Messages.OK -> setWorkerState(State.READY);
             case Messages.PROGRESS -> handleProgress();
             case Messages.SOLVED -> handleSolved(message);
-            case Messages.CANCELLED -> handleCancelled(message);
+            case Messages.CANCELLED -> handleCancelled();
 
             default -> {
                 if (message.contains("NONCE")) {
@@ -105,8 +105,15 @@ public class Worker implements Runnable {
         return message;
     }
 
-    public void handleNonce(String message) {
-        // check si la chaîne à le bon format
+
+    /**
+     * Traiter le message NONCE
+     * Vérifier le format du message et extraire les données
+     *
+     * @param message message NONCE
+     **/
+
+    public void handleNonce(final String message) {
         try {
             String[] parts = message.split(" ");
             if (parts.length != 3) {
@@ -124,7 +131,7 @@ public class Worker implements Runnable {
     }
 
 
-    public void handlePayload(String message) {
+    public void handlePayload(final String message) {
         try {
             // Vérification du format du message
             String[] parts = message.split(" ", 2); // Split en deux parties : instruction et paramètre
@@ -147,7 +154,7 @@ public class Worker implements Runnable {
 
     }
 
-    public void handleSolve(String message) {
+    public void handleSolve(final String message) {
         try {
             // Vérification du format du message
             String[] parts = message.split(" ");
@@ -169,10 +176,20 @@ public class Worker implements Runnable {
     }
 
     public void check() {
-        if (returnIfMiningDataIsReady()) {
-            Solution solution = mine(data, difficulty, start, increment);
-            sendMessageToServer(Messages.FOUND+" "+solution.hash()+" "+solution.nonce());
-            cleanMiningDataAttributes();
+        if (!returnIfMiningDataIsReady()) {
+            return; // Exit if mining data is not ready
+        }
+
+        if (miningThread == null || !miningThread.isAlive()) {
+            miningThread = new Thread(() -> {
+                Solution solution = mine(data, difficulty, start, increment);
+                if (solution == null) {
+                    return;
+                }
+                sendMessageToServer(Messages.FOUND + " " + solution.hash() + " " + solution.nonce());
+                cleanMiningDataAttributes();
+            });
+            miningThread.start();
         }
     }
 
@@ -187,7 +204,7 @@ public class Worker implements Runnable {
         this.increment = -1;
     }
 
-    public void handleSolved(String message) {
+    public void handleSolved(final String message) {
         // check si la chaîne à le bon format
         // process le solve
     }
@@ -200,8 +217,10 @@ public class Worker implements Runnable {
         }
     }
 
-    public void handleCancelled(String message) {
-        // process le cancelled
+    public void handleCancelled() {
+        if (miningThread != null && miningThread.isAlive()) {
+            miningThread.interrupt();
+        }
     }
 
     public void closeConnection() {
@@ -222,27 +241,26 @@ public class Worker implements Runnable {
      * @param difficulty difficulté de minage
      * @return Solution trouvée
      **/
-    public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump/*, final AtomicBoolean stopSignal*/) {
+    public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump) {
         byte[] nonce = BigInteger.valueOf(workerId).toByteArray();
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
         String prefix = "0".repeat(difficulty);
         String hash = hashSHA256(concatenateBytes(data, nonce));
         setWorkerState(State.MINING);
-        while (!hash.startsWith(prefix)) {
-            if (stopSignal.get()) {
-                setWorkerState(State.READY);
-                return null;
-            }
-            hash = hashSHA256(concatenateBytes(data, nonce));
-            nonceFinal = HexFormat.of().formatHex(nonce);
-            System.out.println("Minage du bloc: " + nonceFinal);
-            nonce = incrementBytes(nonce, jumpBytes);
+        while (!Thread.currentThread().isInterrupted() && !hash.startsWith(prefix)) {
+                hash = hashSHA256(concatenateBytes(data, nonce));
+                nonceFinal = HexFormat.of().formatHex(nonce);
+                System.out.println("Minage du bloc: " + nonceFinal);
+                nonce = incrementBytes(nonce, jumpBytes);
         }
-
+        if (Thread.currentThread().isInterrupted()) {
+            setWorkerState(State.READY);
+            System.out.println("Le travail a été annulé");
+            return null;
+        }
         setWorkerState(State.READY);
         return new Solution(hash, nonceFinal.replaceFirst("^0+", ""), difficulty);
     }
-
     /**
      * Incrémenter un tableau de bytes par un autre tableau de bytes
      *
@@ -288,17 +306,11 @@ public class Worker implements Runnable {
         }
     }
 
-    /**
-     * Récupérer l'état du worker
-     *
-     * @return état du workerst
-     **/
     public State getState() {
         return this.state;
     }
 
     private void setWorkerState(State state) {
-        //System.out.println("Worker state : " + state);
         this.state = state;
     }
 
