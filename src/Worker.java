@@ -21,6 +21,11 @@ public class Worker implements Runnable {
     private final Socket socket;
     private final String password = "mdp";
     private State state;
+    private int start;
+    private int increment;
+    private byte[] data;
+    private final AtomicBoolean stopSignal = new AtomicBoolean(false);
+
 
     public Worker(final Socket socket) {
         setWorkerState(State.WAITING);
@@ -100,17 +105,62 @@ public class Worker implements Runnable {
 
     public void handleNonce(String message) {
         // check si la chaîne à le bon format
-        // process le nonce
+        try {
+            String[] parts = message.split(" ");
+            if (parts.length != 3) {
+                System.out.println("Format incorrect pour le message NONCE");
+                return;
+            }
+            this.start = Integer.parseInt(parts[1]);
+            this.increment = Integer.parseInt(parts[2]);
+
+        } catch (NumberFormatException e) {
+            System.out.println("Erreur lors de la conversion des paramètres NONCE : " + e.getMessage());
+        }
     }
 
+
     public void handlePayload(String message) {
-        // check si la chaîne à le bon format
-        // process le payload
+        try {
+            // Vérification du format du message
+            String[] parts = message.split(" ", 2); // Split en deux parties : instruction et paramètre
+            if (parts.length != 2) {
+                System.out.println("Format incorrect pour le message PAYLOAD");
+                return;
+            }
+
+            // Récupération des données
+            data = parts[1].getBytes();
+
+            // Traitement des données ici...
+            System.out.println("Données reçues : " + data);
+
+        } catch (Exception e) {
+            System.out.println("Erreur lors du traitement du message PAYLOAD : " + e.getMessage());
+        }
     }
 
     public void handleSolve(String message) {
-        // check si la chaîne à le bon format
-        // process le solve
+        try {
+            // Vérification du format du message
+            String[] parts = message.split(" ");
+            if (parts.length != 2) {
+                System.out.println("Format incorrect pour le message SOLVE");
+                return;
+            }
+            // Récupération de la difficulté
+            int difficulty = Integer.parseInt(parts[1]);
+
+        } catch (NumberFormatException e) {
+            System.out.println("Erreur lors de la conversion de la difficulté : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erreur lors du traitement du message SOLVE : " + e.getMessage());
+        }
+    }
+
+    public void check() {
+        //verifier si ttes les données sont dispo pour lancer mine()
+        //lancer le minage()
     }
 
     public void handleSolved(String message) {

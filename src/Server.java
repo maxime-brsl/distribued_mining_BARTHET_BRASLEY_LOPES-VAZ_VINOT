@@ -155,8 +155,6 @@ public class Server implements Runnable{
      * @param difficulty difficulté de minage
      **/
     public void solveTask(final String difficulty) {
-        System.out.println("Minage en cours... ");
-
         //Enregistre l'instant de départ du minage pour le calcul du temps écoulé
         Instant start = Instant.now();
 
@@ -179,6 +177,13 @@ public class Server implements Runnable{
                 //Comme on utilise un worker, on le retire de la liste des workers disponibles et on le stocke pour le faire miner
                 Worker worker = availableWorkers.remove(0);
                 try {
+
+                    sendMessageToWorker(worker, "NONCE "+workerId+" "+sizeInitialAvailableWorkers);
+                    sendMessageToWorker(worker, "PAYLOAD "+work);
+                    sendMessageToWorker(worker, "SOLVE "+difficulty);
+
+                    System.out.println("Minage en cours... ");
+
                     Solution solution = worker.mine(work, Integer.parseInt(difficulty), workerId, sizeInitialAvailableWorkers, stopSignal);
 
                     //Si on a trouvé une solution, on arrête les autres workers
