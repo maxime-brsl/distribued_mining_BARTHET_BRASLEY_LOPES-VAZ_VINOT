@@ -20,9 +20,10 @@ public class Worker implements Runnable {
     private PrintWriter out;
     private final Socket socket;
     private final String password = "mdp";
-    private State state = State.WAITING;
+    private State state;
 
     public Worker(final Socket socket) {
+        setWorkerState(State.WAITING);
         this.socket = socket;
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -52,13 +53,14 @@ public class Worker implements Runnable {
             case Messages.WHO_ARE_YOU -> sendMessageToServer(Messages.IDENTIFICATION);
             case Messages.GIMME_PASSWORD -> sendMessageToServer("PASSWD " + password);
             case Messages.HELLO_YOU -> {
-                state = State.READY;
+                setWorkerState(State.READY);
                 sendMessageToServer(Messages.READY);
             }
             case Messages.YOU_DONT_FOOL_ME -> {
-                state = State.DISCONNECTED;
+                setWorkerState(State.DISCONNECTED);
                 closeConnection();
             }
+            case Messages.OK -> setWorkerState(State.READY);
             case Messages.PROGRESS -> handleProgress(message);
             case Messages.SOLVED -> handleSolved(message);
             case Messages.CANCELLED -> handleCancelled(message);
@@ -135,10 +137,10 @@ public class Worker implements Runnable {
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
         String prefix = "0".repeat(difficulty);
         String hash = hashSHA256(concatenateBytes(data, nonce));
-        state = State.MINING;
+        setWorkerState(State.MINING);
         while (!hash.startsWith(prefix)) {
             if (stopSignal.get()) {
-                state = State.READY;
+                setWorkerState(State.READY);
                 return null;
             }
             hash = hashSHA256(concatenateBytes(data, nonce));
@@ -147,7 +149,7 @@ public class Worker implements Runnable {
             nonce = incrementBytes(nonce, jumpBytes);
         }
 
-        state = State.READY;
+        setWorkerState(State.READY);
         return new Solution(hash, nonceFinal.replaceFirst("^0+", ""), difficulty);
     }
 
@@ -203,6 +205,11 @@ public class Worker implements Runnable {
      **/
     public State getState() {
         return this.state;
+    }
+
+    private void setWorkerState(State state) {
+        System.out.println("Worker state : " + state);
+        this.state = state;
     }
 
     public static void main(String[] args) {
