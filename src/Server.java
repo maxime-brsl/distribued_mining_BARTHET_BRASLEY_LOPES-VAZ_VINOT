@@ -23,6 +23,8 @@ public class Server implements Runnable{
     private List<Worker> availableWorkers = new ArrayList<>();
     private static final String PASSWORD = "mdp";
     private final ApiConnect apiConnect;
+    private String hash;
+    private String nonce;
     // Variable partagée entre les threads pour arrêter le minage
     // C'est une variable atomique pour éviter les problèmes de concurrence
     private final AtomicBoolean stopSignal = new AtomicBoolean(false);
@@ -92,8 +94,6 @@ public class Server implements Runnable{
         String receivedReady = worker.displayReceivedMessageFromWorker();
         if (verifyReady(receivedReady)) {
             sendMessageToWorker(worker, Messages.OK);
-            // TODO: gestion de ce qu'on fait avec le worker
-            sendMessageToWorker(worker, Messages.NONCE);
         } else {
             worker.closeConnection();
         }
@@ -155,9 +155,6 @@ public class Server implements Runnable{
      * @param difficulty difficulté de minage
      **/
     public void solveTask(final String difficulty) {
-        //Enregistre l'instant de départ du minage pour le calcul du temps écoulé
-        Instant start = Instant.now();
-
         String work = apiConnect.generateWork(difficulty);
         if (work == null) {
             return;
@@ -184,8 +181,27 @@ public class Server implements Runnable{
 
                     System.out.println("Minage en cours... ");
 
-                    //TODO régler pb timer débute qd je lance solve(), et finit qd je finis found()
-                    timer(start, Instant.now());
+                    //Enregistre l'instant de départ du minage pour le calcul du temps écoulé
+                    Instant start = Instant.now();
+
+                    //Gestion du FOUND
+                    String receivedFound = worker.displayReceivedMessageFromWorker();
+                    if (receivedFound.startsWith(Messages.FOUND)){
+                        try {
+                            String[] parts = receivedFound.split(" ");
+                            if (parts.length != 3) {
+                                System.out.println("Format incorrect pour le message FOUND");
+                                return;
+                            }
+                            this.hash = parts[1];
+                            this.nonce = parts[2];
+                            apiConnect.validateWork("{\"d\": " + difficulty + ", \"n\": \"" + nonce + "\", \"h\": \"" + hash + "\"}");
+                        } catch (Exception e) {
+                            System.out.println("Erreur lors du traitement du message FOUND : " + e.getMessage());
+                        }
+                        //fin du timer, après résolution et vérification de la solution
+                        timer(start, Instant.now());
+                    }
                 } catch (Exception e) {
                     LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
                 }
@@ -196,6 +212,8 @@ public class Server implements Runnable{
         //On remet le signal d'arrêt à faux pour les prochains minages
         stopSignal.set(false);
     }
+
+
 
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);

@@ -25,7 +25,7 @@ public class Worker implements Runnable {
     private int difficulty = -1;
     private int start = -1;
     private int increment = -1;
-    private ApiConnect apiConnect;
+    private String nonceFinal = "";
     private final AtomicBoolean stopSignal = new AtomicBoolean(false);
 
 
@@ -116,10 +116,11 @@ public class Worker implements Runnable {
             this.start = Integer.parseInt(parts[1]);
             this.increment = Integer.parseInt(parts[2]);
 
+            check();
+
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion des paramètres NONCE : " + e.getMessage());
         }
-        check();
     }
 
 
@@ -138,10 +139,12 @@ public class Worker implements Runnable {
             // Traitement des données ici...
             System.out.println("Données reçues : " + data);
 
+            check();
+
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message PAYLOAD : " + e.getMessage());
         }
-        check();
+
     }
 
     public void handleSolve(String message) {
@@ -155,16 +158,18 @@ public class Worker implements Runnable {
             // Récupération de la difficulté
              this.difficulty = Integer.parseInt(parts[1]);
 
+            check();
+
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion de la difficulté : " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message SOLVE : " + e.getMessage());
         }
-        check();
+
     }
 
     public void check() {
-        //verifier si ttes les données sont dispo pour lancer mine()
+        //verifier si ttes les données sont dispo pour lancer le minage
         if ((data == null) || (difficulty == -1) || (start == -1) || (increment == -1)) {
             return;
         } else {
@@ -194,7 +199,11 @@ public class Worker implements Runnable {
     }
 
     public void handleProgress() {
-        sendMessageToServer("current state: " + getState().toString());
+        if (state==State.MINING) {
+            sendMessageToServer("TESTING " + nonceFinal);
+        } else {
+            sendMessageToServer("NOPE");
+        }
     }
 
     public void handleCancelled(String message) {
@@ -221,7 +230,6 @@ public class Worker implements Runnable {
      **/
     public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump/*, final AtomicBoolean stopSignal*/) {
         byte[] nonce = BigInteger.valueOf(workerId).toByteArray();
-        String nonceFinal = "";
         byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
         String prefix = "0".repeat(difficulty);
         String hash = hashSHA256(concatenateBytes(data, nonce));
