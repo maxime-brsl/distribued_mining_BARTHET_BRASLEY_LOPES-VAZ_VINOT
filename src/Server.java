@@ -1,3 +1,5 @@
+import com.sun.tools.jconsole.JConsoleContext;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -98,7 +100,7 @@ public class Server implements Runnable{
     }
 
     private void sendMessageToWorker(final Worker worker, String message) {
-        worker.sendMessageToServer("current state: " + message);
+        worker.sendMessageToServer(message);
     }
 
     
@@ -125,13 +127,14 @@ public class Server implements Runnable{
         return Messages.IDENTIFICATION.equals(identification);
     }
 
-    public void getWorkersStatus() {
+    public void getWorkersStatus() throws IOException {
         if (workersConnectedIsEmpty()) {
             System.out.println("Aucun worker connecté");
             return;
         }
         for (Worker worker : workers) {
             sendMessageToWorker(worker, Messages.PROGRESS);
+            worker.displayReceivedMessageFromWorker();
         }
     }
 

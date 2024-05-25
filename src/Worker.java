@@ -119,7 +119,7 @@ public class Worker implements Runnable {
     }
 
     public void handleProgress() {
-        sendMessageToServer( getState().toString());
+        sendMessageToServer("current state: " + getState().toString());
     }
 
     public void handleCancelled(String message) {
@@ -221,7 +221,7 @@ public class Worker implements Runnable {
     }
 
     private void setWorkerState(State state) {
-        System.out.println("Worker state : " + state);
+        //System.out.println("Worker state : " + state);
         this.state = state;
     }
 
