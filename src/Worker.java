@@ -85,8 +85,6 @@ public class Worker implements Runnable {
                     handleSolve(message);
                 }else if (message.contains("SOLVED")) {
                     handleSolved(message);
-                } else if (message.contains("Minage du bloc: ")) {
-                    // do nothing
                 }else{
                     System.out.println("Message non reconnu : " + message);
                 }
