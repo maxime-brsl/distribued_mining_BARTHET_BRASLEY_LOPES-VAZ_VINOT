@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
