@@ -169,24 +169,18 @@ public class Worker implements Runnable {
     }
 
     public void check() {
-        //verifier si ttes les données sont dispo pour lancer le minage
-        if ((data == null) || (difficulty == -1) || (start == -1) || (increment == -1)) {
-            return;
-        } else {
+        if (returnIfMiningDataIsReady()) {
             Solution solution = mine(data, difficulty, start, increment);
-
             sendMessageToServer(Messages.FOUND+" "+solution.hash()+" "+solution.nonce());
-
-            //TODO A METTRE DANS FOUND dans server :
-            //On formate la solution dans le bon format JSON pour l'envoyer à l'API
-           /* String json = "{\"d\": " + solution.difficulty() + ", \"n\": \"" + solution.nonce() + "\", \"h\": \"" + solution.hash() + "\"}";
-            System.out.println("Solution trouvée par worker " + start + "  : " + json);
-            apiConnect.validateWork(json);*/
-            cleanAttributes();
+            cleanMiningDataAttributes();
         }
     }
 
-    public void cleanAttributes(){
+    public boolean returnIfMiningDataIsReady() {
+        return (data != null) && (difficulty != -1) && (start != -1) && (increment != -1);
+    }
+
+    public void cleanMiningDataAttributes(){
         this.data = null;
         this.difficulty = -1;
         this.start = -1;
