@@ -123,11 +123,12 @@ public class Server implements Runnable{
     private boolean verifyIdentification(String identification) {
         return Messages.IDENTIFICATION.equals(identification);
     }
-        
-    /**
-     * Affiche le statut de chaque worker dans la console
-     **/
+
     public void getWorkersStatus() {
+        if (workersConnectedIsEmpty()) {
+            System.out.println("Aucun worker connecté");
+            return;
+        }
         for (int i = 0; i < workers.size(); i++) {
             Worker worker = workers.get(i);
             System.out.println("Worker " + i + " - Status : " + worker.getState());
@@ -207,7 +208,6 @@ public class Server implements Runnable{
      *
      * @param start Instant de début
      * @param end Instant de fin
-
      **/
     private void timer(final Instant start, final Instant end) {
         Duration timeElapsed = Duration.between(start, end);
@@ -218,6 +218,11 @@ public class Server implements Runnable{
 
         System.out.printf("Durée de l'exécution: %02d:%02d:%02d%n", hours, minutes, seconds);
     }
+
+    public boolean workersConnectedIsEmpty() {
+        return workers.isEmpty();
+    }
+
 
     @Override
     public void run() {
