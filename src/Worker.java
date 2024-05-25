@@ -72,7 +72,9 @@ public class Worker implements Runnable {
                     handlePayload(message);
                 }else if (message.contains("SOLVE")) {
                     handleSolve(message);
-                }else {
+                }else if (message.contains("SOLVED")) {
+                    handleSolved(message);
+                } else {
                     System.out.println("Message non reconnu : " + message);
                 }
             }
