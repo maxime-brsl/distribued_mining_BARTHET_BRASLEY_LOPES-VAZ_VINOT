@@ -69,7 +69,7 @@ public class Server implements Runnable{
     }
 
     // Vérification si le worker utilise le bon protocole et a le bon mot de passe
-    private boolean authenticateWorker(Worker worker) throws IOException {
+    private boolean authenticateWorker(final Worker worker) throws IOException {
         String receivedIdentification = worker.displayReceivedMessageFromWorker();
         if (verifyIdentification(receivedIdentification)) {
             sendMessageToWorker(worker, Messages.GIMME_PASSWORD);
@@ -84,7 +84,7 @@ public class Server implements Runnable{
         return false;
     }
 
-    private boolean verifyIdentification(String identification) {
+    private boolean verifyIdentification(final String identification) {
         return Messages.IDENTIFICATION.equals(identification);
     }
 
@@ -210,7 +210,7 @@ public class Server implements Runnable{
         executor.shutdown();
     }
 
-    private boolean verifyReady(String ready) {
+    private boolean verifyReady(final String ready) {
         return Messages.READY.equals(ready);
     }
 

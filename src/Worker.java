@@ -76,7 +76,7 @@ public class Worker implements Runnable {
         }
     }
 
-    private void handleOthersMessages(String message) {
+    private void handleOthersMessages(final String message) {
         if (message.startsWith(Messages.NONCE)) {
             handleNonce(message);
         } else if (message.startsWith(Messages.PAYLOAD)) {
@@ -159,7 +159,7 @@ public class Worker implements Runnable {
     }
 
     /**
-     * Démarrer le minage si toutes les messages du protocole ont été reçues
+     * Démarrer le minage si tous les messages du protocole ont été reçues
      **/
     public void startMiningIfReady() {
         if (returnIfMiningDataIsReady()) {
@@ -261,7 +261,7 @@ public class Worker implements Runnable {
      * @param jump valeur d'incrément
      * @return tableau incrémenté
      **/
-    private byte[] incrementBytes(byte[] nonce, byte[] jump) {
+    private byte[] incrementBytes(final byte[] nonce,final byte[] jump) {
         BigInteger nonceBigInt = new BigInteger(1, nonce);
         BigInteger jumpBigInt = new BigInteger(1, jump);
         nonceBigInt = nonceBigInt.add(jumpBigInt);
@@ -314,7 +314,7 @@ public class Worker implements Runnable {
         return this.state;
     }
 
-    private void setWorkerState(State state) {
+    private void setWorkerState(final State state) {
         this.state = state;
     }
 
