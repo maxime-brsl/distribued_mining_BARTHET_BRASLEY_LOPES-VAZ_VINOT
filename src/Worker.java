@@ -210,6 +210,7 @@ public class Worker implements Runnable {
         if (miningThread != null && miningThread.isAlive()) {
             miningThread.interrupt();
         }
+        sendMessageToServer(Messages.READY);
     }
 
     public void closeConnection() {
