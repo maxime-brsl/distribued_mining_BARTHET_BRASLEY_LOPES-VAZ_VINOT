@@ -35,7 +35,6 @@ public class LauncherServer {
             } else if (("status").equals(cmd)) {
                 server.getWorkersStatus();
             } else if (("help").equals(cmd.trim())) {
-                // Afficher l'aide
                 displayHelp();
             } else if (cmd.startsWith("solve")) {
                 handleSolveCommand(cmd);

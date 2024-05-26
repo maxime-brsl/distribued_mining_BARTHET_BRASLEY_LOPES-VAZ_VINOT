@@ -103,6 +103,12 @@ public class Server implements Runnable{
         worker.sendMessageToServer(message);
     }
 
+    private void sendMessageToAllWorkers(final String message) {
+        for (Worker worker : workers) {
+            sendMessageToWorker(worker, message);
+        }
+    }
+
     public void cancelTask() {
         for (Worker worker : workers) {
             try {
@@ -161,7 +167,6 @@ public class Server implements Runnable{
                 //Comme on utilise un worker, on le retire de la liste des workers disponibles et on le stocke pour le faire miner
                 Worker worker = availableWorkers.remove(0);
                 try {
-
                     sendMessageToWorker(worker, Messages.NONCE+" "+workerId+" "+sizeInitialAvailableWorkers);
                     sendMessageToWorker(worker, Messages.PAYLOAD+" "+work);
                     sendMessageToWorker(worker, Messages.SOLVE+" "+difficulty);
@@ -188,6 +193,14 @@ public class Server implements Runnable{
                         }
                         //fin du timer, après résolution et vérification de la solution
                         displayElapsedTime(start, Instant.now());
+                        sendMessageToAllWorkers(Messages.SOLVED);
+//                        String receivedReady = worker.displayReceivedMessageFromWorker();
+//                        if (verifyReady(receivedReady)) {
+//                            sendMessageToWorker(worker, Messages.OK);
+//                        } else {
+//                            workers.remove(worker);
+//                            worker.closeConnection();
+//                        }
                     }
                 } catch (Exception e) {
                     LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());

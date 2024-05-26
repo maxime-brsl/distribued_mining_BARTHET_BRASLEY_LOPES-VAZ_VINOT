@@ -66,7 +66,7 @@ public class Worker implements Runnable {
             case Messages.YOU_DONT_FOOL_ME -> handleYouDontFoolMe();
             case Messages.OK -> setWorkerState(State.READY);
             case Messages.PROGRESS -> handleProgress();
-            case Messages.SOLVED -> handleSolved(message);
+            case Messages.SOLVED -> handleSolved();
             case Messages.CANCELLED -> handleCancelled();
             default -> handleOthersMessages(message);
         }
@@ -79,8 +79,6 @@ public class Worker implements Runnable {
             handlePayload(message);
         } else if (message.startsWith("SOLVE")) {
             handleSolve(message);
-        } else if (message.startsWith("SOLVED")) {
-            handleSolved(message);
         } else if (message.contains("Minage du bloc: ")) {
             // do nothing
         } else {
@@ -108,7 +106,6 @@ public class Worker implements Runnable {
         System.out.println("Message received : " + message);
         return message;
     }
-
 
     /**
      * Traiter le message NONCE
@@ -156,14 +153,13 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message SOLVE");
                 return;
             }
-             this.difficulty = Integer.parseInt(parts[1]);
+            this.difficulty = Integer.parseInt(parts[1]);
             startMiningIfReady();
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion de la difficulté : " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message SOLVE : " + e.getMessage());
         }
-
     }
 
     public void startMiningIfReady() {
@@ -176,6 +172,7 @@ public class Worker implements Runnable {
                     }
                     sendMessageToServer(Messages.FOUND + " " + solution.hash() + " " + solution.nonce());
                     cleanMiningDataAttributes();
+                    sendMessageToServer(Messages.READY);
                 });
                 miningThread.start();
             }
@@ -193,9 +190,12 @@ public class Worker implements Runnable {
         this.increment = -1;
     }
 
-    public void handleSolved(final String message) {
-        // check si la chaîne à le bon format
-        // process le solve
+    public void handleSolved() {
+        if (miningThread != null && miningThread.isAlive()) {
+            miningThread.interrupt();
+        }
+        cleanMiningDataAttributes();
+        sendMessageToServer(Messages.READY);
     }
 
     public void handleProgress() {
