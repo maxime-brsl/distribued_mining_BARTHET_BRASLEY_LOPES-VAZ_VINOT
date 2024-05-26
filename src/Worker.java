@@ -73,16 +73,15 @@ public class Worker implements Runnable {
     }
 
     private void handleOthersMessages(String message) {
-        if (message.startsWith("NONCE")) {
+        // Gestion des messages reçus par le worker
+        if (message.startsWith(Messages.NONCE)) {
             handleNonce(message);
-        } else if (message.startsWith("PAYLOAD")) {
+        } else if (message.startsWith(Messages.PAYLOAD)) {
             handlePayload(message);
-        } else if (message.startsWith("SOLVE")) {
+        } else if (message.startsWith(Messages.SOLVE)) {
             handleSolve(message);
-        } else if (message.startsWith("SOLVED")) {
+        } else if (message.startsWith(Messages.SOLVED)) {
             handleSolved(message);
-        } else if (message.contains("Minage du bloc: ")) {
-            // do nothing
         } else {
             System.out.println("Message non reconnu : " + message);
         }
@@ -175,11 +174,13 @@ public class Worker implements Runnable {
     public void startMiningIfReady() {
         if (returnIfMiningDataIsReady()) {
             if (miningThread == null || !miningThread.isAlive()) {
+                // Minage dans un thread pour pouvoir lancer d'autres commandes en parallèle
                 miningThread = new Thread(() -> {
                     Solution solution = mine();
                     if (solution == null) {
                         return;
                     }
+                    // Envoi du message FOUND au serveur avec le hash et le nonce (protocole)
                     sendMessageToServer(Messages.FOUND + " " + solution.hash() + " " + solution.nonce());
                     cleanMiningDataAttributes();
                 });
@@ -189,10 +190,13 @@ public class Worker implements Runnable {
     }
 
     public boolean returnIfMiningDataIsReady() {
+        // Vérifier si les données de minage sont prêtes
+        // Cela signifie que NONCE, PAYLOAD et SOLVE ont été traité et que le minage peut démarrer
         return (this.data != null) && (this.difficulty != -1) && (this.start != -1) && (this.increment != -1);
     }
 
     public void cleanMiningDataAttributes(){
+        // Réinitialiser les données de minage
         this.data = null;
         this.difficulty = -1;
         this.start = -1;
@@ -205,14 +209,17 @@ public class Worker implements Runnable {
     }
 
     public void handleProgress() {
+        // Si le worker est en train de miner, envoyer TESTING + nonce en cours
         if (state==State.MINING) {
             sendMessageToServer("TESTING " + nonceFinal);
         } else {
+            // Sinon, envoyer NOPE (protocole)
             sendMessageToServer("NOPE");
         }
     }
 
     public void handleCancelled() {
+        // Si le minage est en cours, l'interrompre
         if (miningThread != null && miningThread.isAlive()) {
             miningThread.interrupt();
         }
