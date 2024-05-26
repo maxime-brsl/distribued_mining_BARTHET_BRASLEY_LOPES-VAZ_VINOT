@@ -142,7 +142,6 @@ public class Worker implements Runnable {
             }
             //récupération des données à miner et conversion en bytes
             data = parts[1].getBytes();
-            System.out.println("Données reçues : " + data);
             // Lancer le minage si les données sont prêtes
             startMiningIfReady();
         } catch (Exception e) {
