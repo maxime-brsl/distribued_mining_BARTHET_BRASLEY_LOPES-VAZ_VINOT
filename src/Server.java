@@ -1,5 +1,3 @@
-import com.sun.tools.jconsole.JConsoleContext;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -42,7 +39,6 @@ public class Server implements Runnable{
             try {
                 Worker worker = acceptNewWorker();
                 handleWorker(worker);
-
             } catch (IOException e) {
                 LOG.warning("Erreur lors de la connexion du worker: " + e.getMessage());
             }
@@ -84,6 +80,13 @@ public class Server implements Runnable{
         return false;
     }
 
+    private boolean verifyIdentification(String identification) {
+        return Messages.IDENTIFICATION.equals(identification);
+    }
+
+    private boolean verifyPassword(final String password) {
+        return password.equals("PASSWD " + PASSWORD);
+    }
 
     private void processWorker(final Worker worker) throws IOException {
         sendMessageToWorker(worker, Messages.HELLO_YOU);
@@ -100,14 +103,6 @@ public class Server implements Runnable{
         worker.sendMessageToServer(message);
     }
 
-    
-    private boolean verifyPassword(final String password) {
-        return password.equals("PASSWD " + PASSWORD);
-    }
-    
-    /**
-     * Annule toutes les tâches en cours en utilisant le signal d'arrêt
-     **/
     public void cancelTask() {
         for (Worker worker : workers) {
             try {
@@ -117,10 +112,6 @@ public class Server implements Runnable{
             }
         }
         LOG.info("Toutes les tâches en cours ont été annulées.");
-    }
-
-    private boolean verifyIdentification(String identification) {
-        return Messages.IDENTIFICATION.equals(identification);
     }
 
     public void getWorkersStatus() throws IOException {
@@ -196,7 +187,7 @@ public class Server implements Runnable{
                             System.out.println("Erreur lors du traitement du message FOUND : " + e.getMessage());
                         }
                         //fin du timer, après résolution et vérification de la solution
-                        timer(start, Instant.now());
+                        displayElapsedTime(start, Instant.now());
                     }
                 } catch (Exception e) {
                     LOG.warning("Erreur lors de la récupération de la solution: " + e.getMessage());
@@ -207,19 +198,17 @@ public class Server implements Runnable{
         executor.shutdown();
     }
 
-
-
     private boolean verifyReady(String ready) {
         return Messages.READY.equals(ready);
     }
 
     /**
-     * Calculer la durée d'exécution du minage
+     * Calculer et affiche la durée d'exécution du minage
      *
      * @param start Instant de début
      * @param end Instant de fin
      **/
-    private void timer(final Instant start, final Instant end) {
+    private void displayElapsedTime(final Instant start, final Instant end) {
         Duration timeElapsed = Duration.between(start, end);
 
         long hours = timeElapsed.toHours();
@@ -232,7 +221,6 @@ public class Server implements Runnable{
     public boolean workersConnectedIsEmpty() {
         return workers.isEmpty();
     }
-
 
     @Override
     public void run() {
