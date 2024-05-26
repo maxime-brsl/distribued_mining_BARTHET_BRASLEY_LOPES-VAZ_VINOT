@@ -21,6 +21,7 @@ public class LauncherServer {
         while (true) {
             final String commande = scanner.nextLine();
             if (("quit").equals(commande)) {
+                System.out.println("Arrêt du serveur");
                 exit(0);
             } else {
                 executorService.submit(() -> processCommand(commande.trim()));
@@ -40,6 +41,7 @@ public class LauncherServer {
                 handleSolveCommand(cmd);
             } else {
                 LOG.info("Commande inconnue");
+                System.out.println("Commande inconnue - tapez 'help' pour afficher les commandes disponibles");
             }
         } catch (Exception e) {
             LOG.warning("Erreur lors de l'exécution de la commande: " + e.getMessage());
