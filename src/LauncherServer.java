@@ -60,6 +60,10 @@ public class LauncherServer {
         String[] parts = cmd.split(" ");
         if (parts.length < 2) {
             LOG.info("Erreur: difficulté manquante");
+        } else if (!parts[1].matches("\\d+")) {
+            LOG.info("Erreur: la difficulté doit être un nombre");
+        } else if (parts.length > 2) {
+            LOG.info("Erreur: un seul paramètre possible pour cette commande");
         } else {
             String difficulty = parts[1];
             server.solveTask(difficulty);
