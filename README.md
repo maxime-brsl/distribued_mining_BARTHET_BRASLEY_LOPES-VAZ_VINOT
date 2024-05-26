@@ -1,3 +1,4 @@
+Pour les commits, les filtres ne marchent pas, julie et mathieu n'apparaissent pas. Il faut regarder directement le commit et voir son contributeur, nous en sommes désolé.
 # Projet Réseau - Minage distribué
 
 ## Description
