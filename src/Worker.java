@@ -62,35 +62,40 @@ public class Worker implements Runnable {
         switch (message) {
             case Messages.WHO_ARE_YOU -> sendMessageToServer(Messages.IDENTIFICATION);
             case Messages.GIMME_PASSWORD -> sendMessageToServer("PASSWD " + password);
-            case Messages.HELLO_YOU -> {
-                setWorkerState(State.READY);
-                sendMessageToServer(Messages.READY);
-            }
-            case Messages.YOU_DONT_FOOL_ME -> {
-                setWorkerState(State.DISCONNECTED);
-                closeConnection();
-            }
+            case Messages.HELLO_YOU -> handleHelloYou();
+            case Messages.YOU_DONT_FOOL_ME -> handleYouDontFoolMe();
             case Messages.OK -> setWorkerState(State.READY);
             case Messages.PROGRESS -> handleProgress();
             case Messages.SOLVED -> handleSolved(message);
             case Messages.CANCELLED -> handleCancelled();
-
-            default -> {
-                if (message.contains("NONCE")) {
-                    handleNonce(message);
-                } else if (message.contains("PAYLOAD")) {
-                    handlePayload(message);
-                }else if (message.contains("SOLVE")) {
-                    handleSolve(message);
-                }else if (message.contains("SOLVED")) {
-                    handleSolved(message);
-                } else if (message.contains("Minage du bloc: ")) {
-                    // do nothing
-                }else{
-                    System.out.println("Message non reconnu : " + message);
-                }
-            }
+            default -> handleOthersMessages(message);
         }
+    }
+
+    private void handleOthersMessages(String message) {
+        if (message.startsWith("NONCE")) {
+            handleNonce(message);
+        } else if (message.startsWith("PAYLOAD")) {
+            handlePayload(message);
+        } else if (message.startsWith("SOLVE")) {
+            handleSolve(message);
+        } else if (message.startsWith("SOLVED")) {
+            handleSolved(message);
+        } else if (message.contains("Minage du bloc: ")) {
+            // do nothing
+        } else {
+            System.out.println("Message non reconnu : " + message);
+        }
+    }
+
+    private void handleHelloYou() {
+        setWorkerState(State.READY);
+        sendMessageToServer(Messages.READY);
+    }
+
+    private void handleYouDontFoolMe() {
+        setWorkerState(State.DISCONNECTED);
+        closeConnection();
     }
 
     public void sendMessageToServer(final String message) {
@@ -111,7 +116,6 @@ public class Worker implements Runnable {
      *
      * @param message message NONCE
      **/
-
     public void handleNonce(final String message) {
         try {
             String[] parts = message.split(" ");
@@ -121,14 +125,11 @@ public class Worker implements Runnable {
             }
             this.start = Integer.parseInt(parts[1]);
             this.increment = Integer.parseInt(parts[2]);
-
             startMiningIfReady();
-
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion des paramètres NONCE : " + e.getMessage());
         }
     }
-
 
     public void handlePayload(final String message) {
         try {
@@ -138,15 +139,9 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message PAYLOAD");
                 return;
             }
-
-            // Récupération des données
             data = parts[1].getBytes();
-
-            // Traitement des données ici...
             System.out.println("Données reçues : " + data);
-
             startMiningIfReady();
-
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message PAYLOAD : " + e.getMessage());
         }
@@ -161,11 +156,8 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message SOLVE");
                 return;
             }
-            // Récupération de la difficulté
              this.difficulty = Integer.parseInt(parts[1]);
-
             startMiningIfReady();
-
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion de la difficulté : " + e.getMessage());
         } catch (Exception e) {
@@ -256,6 +248,7 @@ public class Worker implements Runnable {
         setWorkerState(State.READY);
         return new Solution(hash, nonceFinal.replaceFirst("^0+", ""), difficulty);
     }
+
     /**
      * Incrémenter un tableau de bytes par un autre tableau de bytes
      *
