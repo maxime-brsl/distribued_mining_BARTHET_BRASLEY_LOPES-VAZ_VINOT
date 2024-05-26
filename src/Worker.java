@@ -8,17 +8,23 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.logging.Logger;
+import javax.net.ssl.*;
+import java.io.*;
+import java.security.KeyStore;
 
 /**
  * Classe Worker
  * Représente un worker qui peut miner un bloc
  **/
 public class Worker implements Runnable {
+
+    private static final int PORT = 1337;
+    private static final String HOST = "localhost";
     private static final Logger LOG = Logger.getLogger(Worker.class.getName());
     private BufferedReader in;
     private PrintWriter out;
-    private final Socket socket;
-    private final String password = "mdp";
+    private SSLSocket socket;
+    private String password;
     private State state;
     private byte[] data;
     private int difficulty = -1;
@@ -27,8 +33,10 @@ public class Worker implements Runnable {
     private String nonceFinal = "";
     private volatile Thread miningThread;
 
+    private static final String TRUSTSTORE_PATH = "clienttruststore.jks";
+    private static final String TRUSTSTORE_PASSWORD = "mysecret2";
 
-    public Worker(final Socket socket) {
+    public Worker(final SSLSocket socket) {
         setWorkerState(State.WAITING);
         this.socket = socket;
         try {
@@ -36,6 +44,45 @@ public class Worker implements Runnable {
             out = new PrintWriter(socket.getOutputStream(), true);
         } catch (IOException e) {
             LOG.warning("Erreur lors de la création du worker: " + e.getMessage());
+        }
+    }
+
+    public void demandeMotDePasse(String message) {
+        String mdpRecu = message.substring(6); // Extraire le mot de passe de la réponse
+        this.password = mdpRecu;
+    }
+
+    public static SSLSocket makeSSlSocket(){
+        try {
+            // Charger le truststore
+            KeyStore trustStore = KeyStore.getInstance("JKS");
+            try (FileInputStream trustStoreStream = new FileInputStream(TRUSTSTORE_PATH)) {
+                trustStore.load(trustStoreStream, TRUSTSTORE_PASSWORD.toCharArray());
+            }
+
+            // Configurer TrustManagerFactory
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+
+            // Configurer SSLContext
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+
+            // Créer SSLSocket
+            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            SSLSocket socketSecure = (SSLSocket) sslSocketFactory.createSocket(HOST, PORT);
+            return socketSecure;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void cacherMDP(String message){
+        if (message.startsWith(Messages.MDP_IS)){
+            System.out.println("Message received : password's server");
+        } else {
+            System.out.println("Message received : " + message);
         }
     }
 
@@ -47,7 +94,7 @@ public class Worker implements Runnable {
                 if (message.contains("Minage du bloc: ")) {
                     System.out.println(message);
                 } else {
-                    System.out.println("Message received : " + message);
+                    cacherMDP(message);
                     handleMessage(message);
                 }
             }
@@ -76,6 +123,7 @@ public class Worker implements Runnable {
         }
     }
 
+
     private void handleOthersMessages(final String message) {
         if (message.startsWith(Messages.NONCE)) {
             handleNonce(message);
@@ -83,6 +131,8 @@ public class Worker implements Runnable {
             handlePayload(message);
         } else if (message.startsWith(Messages.SOLVE)) {
             handleSolve(message);
+        } else if (message.startsWith(Messages.MDP_IS)) {
+            this.demandeMotDePasse(message);
         } else {
             System.out.println("Message non reconnu : " + message);
         }
@@ -301,12 +351,12 @@ public class Worker implements Runnable {
 
     public void sendMessageToServer(final String message) {
         out.println(message);
-        System.out.println("Message sent : " + message);
+        cacherMDP(message);
     }
 
     public String displayReceivedMessageFromWorker() throws IOException {
         String message = in.readLine();
-        System.out.println("Message received : " + message);
+        cacherMDP(message);
         return message;
     }
 
@@ -319,12 +369,8 @@ public class Worker implements Runnable {
     }
 
     public static void main(String[] args) {
-        try {
-            Socket socket = new Socket("localhost", 1337);
-            Worker worker = new Worker(socket);
-            new Thread(worker).start();
-        } catch (IOException e) {
-            LOG.warning("Erreur lors de la création du socket: " + e.getMessage());
-        }
+        SSLSocket socket = makeSSlSocket();
+        Worker worker = new Worker(socket);
+        new Thread(worker).start();
     }
 }

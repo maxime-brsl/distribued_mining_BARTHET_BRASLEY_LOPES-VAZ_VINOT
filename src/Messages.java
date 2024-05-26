@@ -14,4 +14,5 @@ public class Messages {
     public static final String SOLVE = "SOLVE";
     public static final String FOUND = "FOUND";
     public static final String NOPE = "NOPE";
+    public static final String MDP_IS = "MDP_IS";
 }

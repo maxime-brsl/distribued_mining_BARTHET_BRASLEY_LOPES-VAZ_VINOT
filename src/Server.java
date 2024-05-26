@@ -1,36 +1,93 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
+import javax.net.ssl.*;
+import java.io.*;
 
 /**
  * Classe Server
  * Représente le serveur qui gère les workers et leur assigne des tâches
  **/
 public class Server implements Runnable{
+
     private static final Logger LOG = Logger.getLogger(Server.class.getName());
     private ServerSocket serverSocket;
+    private SSLServerSocket secureserverSocket;
     private List<Worker> workers;
     private final List<Worker> availableWorkers = new ArrayList<>();
-    private static final String PASSWORD = "mdp";
+    private String PASSWORD;
     private final ApiConnect apiConnect;
     private String hash;
     private String nonce;
 
+    private static final String KEYSTORE_PATH = "serverkeystore.jks";
+
+    private static final String KEYSTORE_PASSWORD = "mysecret1";
+
+    private SSLServerSocketFactory sslServerSocketFactory;
+
+    private boolean boucle;
+
     public Server(final int port) {
         apiConnect = new ApiConnect();
+        this.initialSSL(port);
+        boucle = true;
         try {
-            serverSocket = new ServerSocket(port);
+            this.PASSWORD = generatePassword(8);
             workers = new ArrayList<>();
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.warning("Erreur lors de la création du serveur: " + e.getMessage());
         }
+    }
+
+    private void initialSSL(int port){
+        try {
+            // Charger le keystore
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            try (FileInputStream keyStoreStream = new FileInputStream(KEYSTORE_PATH)) {
+                keyStore.load(keyStoreStream, KEYSTORE_PASSWORD.toCharArray());
+            }
+
+            // Configurer KeyManagerFactory
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, KEYSTORE_PASSWORD.toCharArray());
+
+            // Configurer SSLContext
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+
+            // Créer SSLServerSocket
+            sslServerSocketFactory = sslContext.getServerSocketFactory();
+            secureserverSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(port);
+            System.out.println("Serveur en attente de connexions sécurisées...");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String generatePassword(int longueur){
+        String caracterePossible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        String mdp = "";
+        for (int i = 0; i < longueur; i++) {
+            // Ajouter un caractère au hasard
+            int index = random.nextInt(caracterePossible.length());
+            char caractere = caracterePossible.charAt(index);
+            mdp = mdp + caractere;
+        }
+        return mdp;
     }
 
     public void start() {
@@ -46,7 +103,7 @@ public class Server implements Runnable{
     }
 
     private Worker acceptNewWorker() throws IOException {
-        Socket workerSocket = serverSocket.accept();
+        SSLSocket workerSocket = (SSLSocket) secureserverSocket.accept();
         System.out.println("Nouveau worker connecté: " + workerSocket);
         return new Worker(workerSocket);
     }
@@ -57,10 +114,28 @@ public class Server implements Runnable{
      **/
     private void handleWorker(final Worker worker) throws IOException {
         initProtocol(worker);
+        // Envoyer mot de passe
+
         if (authenticateWorker(worker)) {
             processWorker(worker);
         } else {
             worker.closeConnection();
+        }
+    }
+
+    private void envoieMdp(SSLSocket sslSocket) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(sslSocket.getInputStream()));
+             PrintWriter out = new PrintWriter(sslSocket.getOutputStream(), true)) {
+
+            String received = in.readLine();
+            System.out.println("Message reçu : " + received);
+
+            out.println("MDP_IS=" + PASSWORD);
+
+            boucle = false;
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -72,6 +147,7 @@ public class Server implements Runnable{
     private boolean authenticateWorker(final Worker worker) throws IOException {
         String receivedIdentification = worker.displayReceivedMessageFromWorker();
         if (verifyIdentification(receivedIdentification)) {
+            sendMDPToWorker(worker, Messages.MDP_IS + PASSWORD);
             sendMessageToWorker(worker, Messages.GIMME_PASSWORD);
             String receivedPassword = worker.displayReceivedMessageFromWorker();
             if (verifyPassword(receivedPassword)) {
@@ -104,6 +180,10 @@ public class Server implements Runnable{
     }
 
     private void sendMessageToWorker(final Worker worker, String message) {
+        worker.sendMessageToServer(message);
+    }
+
+    private void sendMDPToWorker(final Worker worker, String message) {
         worker.sendMessageToServer(message);
     }
 
