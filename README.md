@@ -34,6 +34,29 @@ Voici les commandes disponibles :
 - `exit` : Arrête le serveur
 - `help` : Affiche les commandes disponibles
 
+## Canal sécurisé
+
+Pour pouvoir faire fonctionner le canal sécurisé :
+
+# 1/ Génération du Keystore avec keytool
+
+keytool -genkeypair -alias serverkey -keyalg RSA -keystore serverkeystore.jks -keysize 2048 -validity 365 -storepass mysecret1 -keypass mysecret1 -dname "CN=localhost"
+
+Mot de passe à utiliser : mysecret1
+(on peut changer mais il faut le faire aussi dans le code et les commandes suivantes)
+
+# 2/ Exportation du Certificat du Serveur
+
+keytool -export -alias serverkey -file servercert.cer -keystore serverkeystore.jks -storepass mysecret1
+
+# 3/ Importation du Certificat dans le Truststore pour le Client
+
+keytool -import -alias servercert -file servercert.cer -keystore clienttruststore.jks -storepass mysecret2 -noprompt
+
+
+Keystore et Truststore: Le keystore contient les clés privées et les certificats du serveur, tandis que le truststore contient les certificats de confiance pour le client.
+
+
 ## Auteurs
 - [Julie Barthet]()
 - [Maxime Brasley]()
