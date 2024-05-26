@@ -51,6 +51,10 @@ public class Server implements Runnable{
         return new Worker(workerSocket);
     }
 
+    /**
+     * Ajoute le worker à la liste des workers disponibles pour le minage si il est authentifié
+     * @param worker worker à gérer
+     **/
     private void handleWorker(final Worker worker) throws IOException {
         initProtocol(worker);
         if (authenticateWorker(worker)) {
@@ -132,7 +136,7 @@ public class Server implements Runnable{
     }
 
     /**
-     * Met à jour la liste des workers disponibles
+     * Ajoute à la liste workers tous les workers qui ne minent pas actuellement
      **/
     public void updateAvailaibleWorkers() {
         for (Worker worker : workers) {

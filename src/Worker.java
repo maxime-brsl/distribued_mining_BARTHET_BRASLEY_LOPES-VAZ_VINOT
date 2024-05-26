@@ -58,6 +58,10 @@ public class Worker implements Runnable {
         }
     }
 
+    /**
+     * Centralise le traitement des messages reçus du serveur et renvoie la réponse appropriée suivant le protocole
+     * @param message message reçu
+     */
     private void handleMessage(final String message) {
         switch (message) {
             case Messages.WHO_ARE_YOU -> sendMessageToServer(Messages.IDENTIFICATION);
@@ -73,15 +77,12 @@ public class Worker implements Runnable {
     }
 
     private void handleOthersMessages(String message) {
-        // Gestion des messages reçus par le worker
         if (message.startsWith(Messages.NONCE)) {
             handleNonce(message);
         } else if (message.startsWith(Messages.PAYLOAD)) {
             handlePayload(message);
         } else if (message.startsWith(Messages.SOLVE)) {
             handleSolve(message);
-        } else if (message.startsWith(Messages.SOLVED)) {
-            handleSolved(message);
         } else {
             System.out.println("Message non reconnu : " + message);
         }
@@ -97,22 +98,9 @@ public class Worker implements Runnable {
         closeConnection();
     }
 
-    public void sendMessageToServer(final String message) {
-        out.println(message);
-        System.out.println("Message sent : " + message);
-    }
-
-    public String displayReceivedMessageFromWorker() throws IOException {
-        String message = in.readLine();
-        System.out.println("Message received : " + message);
-        return message;
-    }
-
     /**
-     * Traiter le message NONCE
-     * Vérifier le format du message et extraire les données
-     *
-     * @param message message NONCE
+     * Vérifie le format du message NONCE et initialise les attributs de minage
+     * @param message message reçu
      **/
     public void handleNonce(final String message) {
         try {
@@ -129,6 +117,10 @@ public class Worker implements Runnable {
         }
     }
 
+    /**
+     * Vérifie le format du message PAYLOAD et initialise les attributs de minage
+     * @param message message reçu
+     **/
     public void handlePayload(final String message) {
         try {
             // Vérification du format du message
@@ -137,9 +129,7 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message PAYLOAD");
                 return;
             }
-            //récupération des données à miner et conversion en bytes
             data = parts[1].getBytes();
-            // Lancer le minage si les données sont prêtes
             startMiningIfReady();
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message PAYLOAD : " + e.getMessage());
@@ -147,6 +137,10 @@ public class Worker implements Runnable {
 
     }
 
+    /**
+     * Vérifie le format du message SOLVE et initialise la difficulté de minage
+     * @param message message reçu
+     **/
     public void handleSolve(final String message) {
         try {
             // Vérification du format du message
@@ -164,6 +158,9 @@ public class Worker implements Runnable {
         }
     }
 
+    /**
+     * Démarrer le minage si toutes les messages du protocole ont été reçues
+     **/
     public void startMiningIfReady() {
         if (returnIfMiningDataIsReady()) {
             if (miningThread == null || !miningThread.isAlive()) {
@@ -183,14 +180,14 @@ public class Worker implements Runnable {
         }
     }
 
+    /**
+     * Retourne si NONCE, PAYLOAD et SOLVE ont été traité et que le minage peut démarrer
+     **/
     public boolean returnIfMiningDataIsReady() {
-        // Vérifier si les données de minage sont prêtes
-        // Cela signifie que NONCE, PAYLOAD et SOLVE ont été traité et que le minage peut démarrer
         return (this.data != null) && (this.difficulty != -1) && (this.start != -1) && (this.increment != -1);
     }
 
     public void cleanMiningDataAttributes(){
-        // Réinitialiser les données de minage
         this.data = null;
         this.difficulty = -1;
         this.start = -1;
@@ -206,21 +203,17 @@ public class Worker implements Runnable {
     }
 
     public void handleProgress() {
-        // Si le worker est en train de miner, envoyer TESTING + nonce en cours
         if (state==State.MINING) {
             sendMessageToServer("TESTING " + nonceFinal);
         } else {
-            // Sinon, envoyer NOPE (protocole)
             sendMessageToServer("NOPE");
         }
     }
 
     public void handleCancelled() {
-        // Si le minage est en cours, l'interrompre
         if (miningThread != null && miningThread.isAlive()) {
             miningThread.interrupt();
         }
-        // Une fois le minage interrompu, prévenir le serveur que ce worker est de nouveau READY
         sendMessageToServer(Messages.READY);
     }
 
@@ -304,6 +297,17 @@ public class Worker implements Runnable {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void sendMessageToServer(final String message) {
+        out.println(message);
+        System.out.println("Message sent : " + message);
+    }
+
+    public String displayReceivedMessageFromWorker() throws IOException {
+        String message = in.readLine();
+        System.out.println("Message received : " + message);
+        return message;
     }
 
     public State getState() {

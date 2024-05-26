@@ -104,7 +104,7 @@ public class ApiConnect {
      * @return travail généré
      */
     public String generateWork(final String difficulty) {
-        /*String work = connectToApi("/generate_work?d=" + difficulty, null);
+        String work = connectToApi("/generate_work?d=" + difficulty, null);
         if (codeResponse(work) != null) {
             System.out.println(codeResponse(work));
             return null;
@@ -115,8 +115,8 @@ public class ApiConnect {
             int startIndex = work.indexOf("\"data\":\"") + 8;
             int endIndex = work.indexOf("\"", startIndex);
             return work.substring(startIndex, endIndex);
-        }*/
-        return "s3xv226nfl84z6g6yfysrg55tcvdkp6r3yuhmg3ra7tcqo6530t";
+        }
+        //return "s3xv226nfl84z6g6yfysrg55tcvdkp6r3yuhmg3ra7tcqo6530t";
     }
 
     /**
