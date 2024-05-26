@@ -161,7 +161,8 @@ public class Server implements Runnable{
                 //Comme on utilise un worker, on le retire de la liste des workers disponibles et on le stocke pour le faire miner
                 Worker worker = availableWorkers.remove(0);
                 try {
-
+                    // Envoi des messages au worker
+                    // Ordre insignifiant grâce à la fonction check() du worker
                     sendMessageToWorker(worker, Messages.NONCE+" "+workerId+" "+sizeInitialAvailableWorkers);
                     sendMessageToWorker(worker, Messages.PAYLOAD+" "+work);
                     sendMessageToWorker(worker, Messages.SOLVE+" "+difficulty);
@@ -180,8 +181,10 @@ public class Server implements Runnable{
                                 System.out.println("Format incorrect pour le message FOUND");
                                 return;
                             }
+                            // Récupération des données de la solution
                             this.hash = parts[1];
                             this.nonce = parts[2];
+                            // Validation de la solution
                             apiConnect.validateWork("{\"d\": " + difficulty + ", \"n\": \"" + nonce + "\", \"h\": \"" + hash + "\"}");
                         } catch (Exception e) {
                             System.out.println("Erreur lors du traitement du message FOUND : " + e.getMessage());

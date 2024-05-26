@@ -123,8 +123,10 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message NONCE");
                 return;
             }
+            // Récupération des données de minage
             this.start = Integer.parseInt(parts[1]);
             this.increment = Integer.parseInt(parts[2]);
+            // Lancer le minage si les données sont prêtes
             startMiningIfReady();
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion des paramètres NONCE : " + e.getMessage());
@@ -139,8 +141,10 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message PAYLOAD");
                 return;
             }
+            //récupération des données à miner et conversion en bytes
             data = parts[1].getBytes();
             System.out.println("Données reçues : " + data);
+            // Lancer le minage si les données sont prêtes
             startMiningIfReady();
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message PAYLOAD : " + e.getMessage());
@@ -156,7 +160,9 @@ public class Worker implements Runnable {
                 System.out.println("Format incorrect pour le message SOLVE");
                 return;
             }
+            // Récupération de la difficulté saisie
              this.difficulty = Integer.parseInt(parts[1]);
+            // Lancer le minage si les données sont prêtes
             startMiningIfReady();
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion de la difficulté : " + e.getMessage());
@@ -210,6 +216,7 @@ public class Worker implements Runnable {
         if (miningThread != null && miningThread.isAlive()) {
             miningThread.interrupt();
         }
+        // Une fois le minage interrompu, prévenir le serveur que ce worker est de nouveau READY
         sendMessageToServer(Messages.READY);
     }
 
