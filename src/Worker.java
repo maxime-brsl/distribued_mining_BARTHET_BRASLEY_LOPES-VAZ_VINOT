@@ -84,6 +84,8 @@ public class Worker implements Runnable {
                     handleSolve(message);
                 }else if (message.contains("SOLVED")) {
                     handleSolved(message);
+                } else if (message.contains("Minage du bloc: ")) {
+                    // do nothing
                 }else{
                     System.out.println("Message non reconnu : " + message);
                 }
@@ -120,7 +122,7 @@ public class Worker implements Runnable {
             this.start = Integer.parseInt(parts[1]);
             this.increment = Integer.parseInt(parts[2]);
 
-            check();
+            startMiningIfReady();
 
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion des paramètres NONCE : " + e.getMessage());
@@ -143,7 +145,7 @@ public class Worker implements Runnable {
             // Traitement des données ici...
             System.out.println("Données reçues : " + data);
 
-            check();
+            startMiningIfReady();
 
         } catch (Exception e) {
             System.out.println("Erreur lors du traitement du message PAYLOAD : " + e.getMessage());
@@ -162,7 +164,7 @@ public class Worker implements Runnable {
             // Récupération de la difficulté
              this.difficulty = Integer.parseInt(parts[1]);
 
-            check();
+            startMiningIfReady();
 
         } catch (NumberFormatException e) {
             System.out.println("Erreur lors de la conversion de la difficulté : " + e.getMessage());
@@ -172,26 +174,24 @@ public class Worker implements Runnable {
 
     }
 
-    public void check() {
-        if (!returnIfMiningDataIsReady()) {
-            return; // Exit if mining data is not ready
-        }
-
-        if (miningThread == null || !miningThread.isAlive()) {
-            miningThread = new Thread(() -> {
-                Solution solution = mine(data, difficulty, start, increment);
-                if (solution == null) {
-                    return;
-                }
-                sendMessageToServer(Messages.FOUND + " " + solution.hash() + " " + solution.nonce());
-                cleanMiningDataAttributes();
-            });
-            miningThread.start();
+    public void startMiningIfReady() {
+        if (returnIfMiningDataIsReady()) {
+            if (miningThread == null || !miningThread.isAlive()) {
+                miningThread = new Thread(() -> {
+                    Solution solution = mine();
+                    if (solution == null) {
+                        return;
+                    }
+                    sendMessageToServer(Messages.FOUND + " " + solution.hash() + " " + solution.nonce());
+                    cleanMiningDataAttributes();
+                });
+                miningThread.start();
+            }
         }
     }
 
     public boolean returnIfMiningDataIsReady() {
-        return (data != null) && (difficulty != -1) && (start != -1) && (increment != -1);
+        return (this.data != null) && (this.difficulty != -1) && (this.start != -1) && (this.increment != -1);
     }
 
     public void cleanMiningDataAttributes(){
@@ -234,18 +234,16 @@ public class Worker implements Runnable {
     /**
      * Miner un bloc de données avec une difficulté donnée
      *
-     * @param data data à miner
-     * @param difficulty difficulté de minage
      * @return Solution trouvée
      **/
-    public Solution mine(final byte[] data, final int difficulty, final int workerId, final int jump) {
-        byte[] nonce = BigInteger.valueOf(workerId).toByteArray();
-        byte[] jumpBytes = BigInteger.valueOf(jump).toByteArray();
-        String prefix = "0".repeat(difficulty);
-        String hash = hashSHA256(concatenateBytes(data, nonce));
+    public Solution mine() {
+        byte[] nonce = BigInteger.valueOf(this.start).toByteArray();
+        byte[] jumpBytes = BigInteger.valueOf(this.increment).toByteArray();
+        String prefix = "0".repeat(this.difficulty);
+        String hash = hashSHA256(concatenateBytes(this.data, nonce));
         setWorkerState(State.MINING);
         while (!Thread.currentThread().isInterrupted() && !hash.startsWith(prefix)) {
-                hash = hashSHA256(concatenateBytes(data, nonce));
+                hash = hashSHA256(concatenateBytes(this.data, nonce));
                 nonceFinal = HexFormat.of().formatHex(nonce);
                 System.out.println("Minage du bloc: " + nonceFinal);
                 nonce = incrementBytes(nonce, jumpBytes);
